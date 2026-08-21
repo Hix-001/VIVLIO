@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Header } from './components/ui/Header';
 import { ShelfControls } from './components/ui/ShelfControls';
 import { BookDetails } from './components/ui/BookDetails';
@@ -6,6 +6,7 @@ import { UploadModal } from './components/ui/UploadModal';
 import { ReadingView } from './components/ui/ReadingView';
 import { CollectionGrid } from './components/collections/CollectionGrid';
 import { AudioControls } from './components/audio/AudioControls';
+import { PasswordModal } from './components/ui/PasswordModal';
 import { Scene } from './components/3d/Scene';
 import { useBookStore } from './store/bookStore';
 import { useUIStore } from './store/uiStore';
@@ -16,16 +17,17 @@ export const App: React.FC = () => {
   const { viewMode } = useUIStore();
   const { initialize: initializeAudio } = useAudioStore();
 
-  useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem('vivlio_token');
-    if (!token) {
-      window.location.href = '/auth.html';
-      return;
-    }
+  const [isUnlocked, setIsUnlocked] = useState<boolean>(() => {
+    return localStorage.getItem('vivlio_unlocked') === '1907';
+  });
 
+  useEffect(() => {
     fetchBooks();
-    initializeAudio();
+    try {
+      initializeAudio();
+    } catch (e) {
+      console.warn('Audio init:', e);
+    }
   }, [fetchBooks, initializeAudio]);
 
   // Update dynamic CSS theme tokens when active book changes
@@ -42,7 +44,12 @@ export const App: React.FC = () => {
   }, [activeBook]);
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-[#100f0d]">
+    <div className="relative w-screen h-screen overflow-hidden bg-[#100f0d]">
+      {/* Password Unlock Modal Popup */}
+      {!isUnlocked && (
+        <PasswordModal onSuccess={() => setIsUnlocked(true)} />
+      )}
+
       {/* Dynamic Radial Ambient Glow */}
       <div
         className="absolute inset-0 pointer-events-none z-0 transition-all duration-1000"

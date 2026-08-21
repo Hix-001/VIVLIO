@@ -1,11 +1,16 @@
 import React from 'react';
-import { Plus, BookOpen, Library, Search } from 'lucide-react';
+import { Plus, BookOpen, Library, Lock } from 'lucide-react';
 import { useUIStore } from '../../store/uiStore';
 import { useBookStore } from '../../store/bookStore';
 
 export const Header: React.FC = () => {
   const { viewMode, setViewMode, setUploadModalOpen } = useUIStore();
   const { books } = useBookStore();
+
+  const handleLock = () => {
+    localStorage.removeItem('vivlio_unlocked');
+    window.location.reload();
+  };
 
   return (
     <header className="absolute top-0 left-0 right-0 z-20 flex justify-between items-center px-8 py-6 pointer-events-none">
@@ -38,21 +43,15 @@ export const Header: React.FC = () => {
           <span>Add Book</span>
         </button>
 
-        {/* User Account / Logout */}
-        <div className="flex items-center gap-2 bg-[#1a1714]/80 backdrop-blur-md border border-[#d4af37]/20 px-3 py-1.5 rounded-full text-xs font-mono text-[#d4af37]">
-          <span>Harsh Sir</span>
-          <a
-            href="/auth.html"
-            onClick={() => {
-              localStorage.removeItem('vivlio_token');
-              localStorage.removeItem('vivlio_user');
-            }}
-            className="ml-1 text-[10px] text-[#8e7f6e] hover:text-white underline cursor-pointer"
-            title="Log Out"
-          >
-            Logout
-          </a>
-        </div>
+        {/* Lock Library button */}
+        <button
+          onClick={handleLock}
+          className="flex items-center gap-1.5 bg-[#1a1714]/80 backdrop-blur-md border border-[#d4af37]/20 hover:border-[#d4af37] px-3.5 py-2 rounded-full text-xs font-mono text-[#d4af37] hover:text-white transition-all"
+          title="Lock Library"
+        >
+          <Lock size={12} />
+          <span>Lock</span>
+        </button>
       </div>
     </header>
   );
