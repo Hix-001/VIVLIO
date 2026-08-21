@@ -1,6 +1,69 @@
 import { create } from 'zustand';
-import { Book, Collection, ReadingProgress } from '../types';
+import { Book, ReadingProgress } from '../types';
 import { BookAPI, ReadingAPI } from '../lib/api';
+
+export const DEFAULT_BOOKS: Book[] = [
+  {
+    id: 'vol-no-longer-human',
+    title: 'No Longer Human',
+    author: 'Osamu Dazai',
+    description: 'A portrait of alienation and solitude in modern Japan.',
+    file_path: '/book/NO LONGER HUMAN - OSAMU DAZAI.pdf',
+    total_pages: 176,
+    cloth_color: '#181f33',
+    foil_color: '#a8c5db',
+    theme_glow: 'rgba(168, 197, 219, 0.25)',
+    dimensions: { width: 1.5, height: 2.2, depth: 0.4 }
+  },
+  {
+    id: 'vol-the-fall',
+    title: 'The Fall & The Outsider',
+    author: 'Albert Camus',
+    description: 'Absurdity, freedom and moral isolation in two masterpieces.',
+    file_path: '/book/Camus, Albert - The Fall and The Outsider [tr. Gilbert] (Lythway, 1977).pdf',
+    total_pages: 224,
+    cloth_color: '#683b1d',
+    foil_color: '#df9652',
+    theme_glow: 'rgba(223, 150, 82, 0.25)',
+    dimensions: { width: 1.5, height: 2.2, depth: 0.45 }
+  },
+  {
+    id: 'vol-early-greek',
+    title: 'Early Greek Philosophy',
+    author: 'John Burnet',
+    description: 'The origins of cosmology and rational enquiry in the pre-Socratic era.',
+    file_path: '/book/EARLY GREEK PHILOSOPHY.pdf',
+    total_pages: 412,
+    cloth_color: '#1e3826',
+    foil_color: '#e5c468',
+    theme_glow: 'rgba(229, 196, 104, 0.25)',
+    dimensions: { width: 1.5, height: 2.2, depth: 0.55 }
+  },
+  {
+    id: 'vol-dark-psychology',
+    title: 'Dark Psychology',
+    author: 'Behavioral Studies',
+    description: 'Perception, emotional dynamics and influence tactics to be aware of.',
+    file_path: '/book/Dark Psychology - How to Analyze People, and Their Emotional Intelligence To Be Able to Avoid.pdf',
+    total_pages: 148,
+    cloth_color: '#1e2024',
+    foil_color: '#dc8448',
+    theme_glow: 'rgba(220, 132, 72, 0.25)',
+    dimensions: { width: 1.5, height: 2.2, depth: 0.38 }
+  },
+  {
+    id: 'vol-untethered-soul',
+    title: 'The Untethered Soul',
+    author: 'Michael A. Singer',
+    description: 'The journey beyond yourself and exploring inner consciousness.',
+    file_path: '/book/The Untethered Soul (Michael A. Singer Michael Alan Singer).pdf',
+    total_pages: 200,
+    cloth_color: '#162842',
+    foil_color: '#f5d36e',
+    theme_glow: 'rgba(245, 211, 110, 0.25)',
+    dimensions: { width: 1.5, height: 2.2, depth: 0.42 }
+  }
+];
 
 interface BookStore {
   books: Book[];
@@ -20,8 +83,8 @@ interface BookStore {
 }
 
 export const useBookStore = create<BookStore>((set, get) => ({
-  books: [],
-  activeBookId: null,
+  books: DEFAULT_BOOKS,
+  activeBookId: DEFAULT_BOOKS[0]?.id || null,
   shelfIndex: 0,
   isLoading: false,
   searchQuery: '',
@@ -30,14 +93,18 @@ export const useBookStore = create<BookStore>((set, get) => ({
   fetchBooks: async (search?: string) => {
     set({ isLoading: true });
     try {
-      const books = await BookAPI.getBooks({ search });
-      set({ books, isLoading: false });
-      if (books.length > 0 && !get().activeBookId) {
-        set({ activeBookId: books[0].id });
+      const serverBooks = await BookAPI.getBooks({ search });
+      if (serverBooks && serverBooks.length > 0) {
+        set({ books: serverBooks, isLoading: false });
+        if (!get().activeBookId) {
+          set({ activeBookId: serverBooks[0].id });
+        }
+      } else {
+        set({ books: DEFAULT_BOOKS, isLoading: false });
       }
     } catch (e) {
-      console.error('Failed to fetch books from backend API:', e);
-      set({ isLoading: false });
+      console.warn('Backend API unavailable, using bundled default 3D shelf collection:', e);
+      set({ books: DEFAULT_BOOKS, isLoading: false });
     }
   },
 
@@ -89,7 +156,11 @@ export const useBookStore = create<BookStore>((set, get) => ({
   },
 
   deleteBook: async (bookId: string) => {
-    await BookAPI.deleteBook(bookId);
-    await get().fetchBooks();
+    try {
+      await BookAPI.deleteBook(bookId);
+      await get().fetchBooks();
+    } catch (e) {
+      console.warn('Delete failed:', e);
+    }
   },
 }));
