@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: vivlio_backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: sqlite:///./library.db
+      SECRET_KEY: ${SECRET_KEY:-insecure-dev-secret-key-change-in-production}
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./book:/app/book:ro
+      - backend_data:/app
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    container_name: vivlio_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  backend_data:

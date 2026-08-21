@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Signal — Log in</title>
+  <script>
+    document.documentElement.classList.add('entry-pending');
+    window.__entryFallback = setTimeout(function(){
+      document.documentElement.classList.remove('entry-pending');
+    }, 3500);
+  </script>
+  <style>
+    /* -------------------------------------------------------------
+       1. FONTS
+       Grotesque fallback for FreeSans, Geometric Variable for Eloquia
+       with font-display: block and exact variation settings support.
+       ------------------------------------------------------------- */
+    @font-face {
+      font-family: 'FreeSans';
+      font-weight: 400;
+      font-style: normal;
+      font-display: block;
+      src: local('FreeSans'), local('Helvetica Neue'), local('Arial'), local('sans-serif');
+    }
+    @font-face {
+      font-family: 'FreeSans';
+      font-weight: 700;
+      font-style: normal;
+      font-display: block;
+      src: local('FreeSans Bold'), local('Helvetica Neue Bold'), local('Arial Bold'), local('sans-serif');
+    }
+    @font-face {
+      font-family: 'Eloquia';
+      font-weight: 200 800;
+      font-style: normal;
+      font-display: block;
+      src: local('Eloquia'), local('Plus Jakarta Sans'), local('Inter'), local('system-ui'), local('sans-serif');
+    }
+
+    /* -------------------------------------------------------------
+       2. DESIGN TOKENS (:root)
+       Verbatim design metrics & calibration
+       ------------------------------------------------------------- */
+    :root {
+      --W: 1464; --H: 949; --photoW: 836; --paneW: 628; --cardW: 613; --cardH: 922;
+
+      --badge-fs: 13.60px; --badge-fw: 400; --badge-ls: -0.163px; --badge-gap: 10px; --badge-dy: 0px; --badge-ws: 0px;
+      --badge-left: 34px; --badge-top: 684px;
+      --hl-lh: 1; --hl-wght: 578;
+      --hl1-fs: 69.14px; --hl1-ls: -1.936px; --hl1-ws: 0px; --hl1-left: 33.00px; --hl1-top: 750.02px;
+      --hl2-fs: 68.95px; --hl2-ls: -1.931px; --hl2-left: 32.00px; --hl2-top: 831.01px;
+      --h1-top: 65.00px; --h1-fs: 42.55px; --h1-ls: -2.553px; --h1-ws: 1.300px; --h1-wght: 584;
+      --sub-top: 120.00px; --sub-fs: 20.41px; --sub-ls: -0.245px; --sub-ws: -2.000px; --sub-fw: 400; --sub-fwb: 700;
+      --fieldpad: 19px;
+      --eph-fs: 15.68px; --eph-ls: -0.188px; --eph-left: 17.0px; --eph-fw: 400; --eph-ws: 0px;
+      --pph-fs: 17.29px; --pph-ls: -0.698px; --pph-left: 18px; --pph-fw: 400;
+      --login-fs: 16.38px; --login-fw: 400; --login-ls: 0.200px; --login-gap: 10px; --login-dy: 0.00px; --login-padl: -12.00px;
+      --arrow-w: 13.2px;
+      --div-top: 477px; --or-fs: 11.5px; --or-fw: 700; --or-ls: 0.8px; --or-dy: 2.00px; --or-dx: 0.00px;
+      --or-line-l: 205px; --or-line-r: 204px;
+      --g-gap: 17px; --g-icon: 18.5px;
+      --gt-fs: 18.10px; --gt-fw: 400; --gt-ls: -0.217px; --gt-ws: -1.000px; --gt-dy: 1.00px;
+      --bt-top: 611.00px; --bt-fs: 16.37px; --bt-fw: 400; --bt-ls: -0.196px; --bt-ws: -2.060px; --bt-fwb: 700; --bt-uo: 3px;
+      --card-shadow: 1px 10px 14px rgba(10,14,20,0.14), 0 1px 3px rgba(10,14,20,0.05);
+      --cs: 1;
+
+      /* Palette */
+      --ink: #000;          --h1-color: #2c3343;   --sub-grey: #797979;
+      --badge-bg: #2f2a27;  --ph: #606060;         --or: #5a5a5b;
+      --gtext: #232424;     --bottom: #0a0a0a;
+      --btn1: #283139;      --btn2: #293340;
+      --inputFill: #fafafa; --inputBorder: #acacae; --pwFill: #f9f9f9;
+      --gBorder: #c8c8ca;   --divider: #b1b1b2;     --page: #fefefe;
+    }
+
+    /* -------------------------------------------------------------
+       3. GLOBAL RESETS & STYLING
+       ------------------------------------------------------------- */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--page);
+    }
+
+    body {
+      font-family: 'FreeSans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: geometricPrecision;
+      overflow: hidden;
+      color: var(--ink);
+    }
+
+    /* -------------------------------------------------------------
+       4. DESKTOP BASE STYLES
+       ------------------------------------------------------------- */
+    .stage {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    .photo {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 57.1038%; /* 836 / 1464 */
+      overflow: hidden;
+      background: #0a0e14;
+    }
+
+    .photo-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 100% 50%;
+      display: block;
+      -webkit-user-drag: none;
+      user-select: none;
+    }
+
+    .photo-img--wide {
+      display: none;
+    }
+
+    .scrim {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(7,10,13,.02) 18%, rgba(7,10,13,.12) 48%, rgba(7,10,13,.78) 100%);
+      pointer-events: none;
+    }
+
+    .hero {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 836px;
+      height: 949px;
+      transform-origin: left bottom;
+      pointer-events: none;
+    }
+    .hero > * {
+      pointer-events: auto;
+    }
+
+    .badge {
+      position: absolute;
+      left: var(--badge-left);
+      top: var(--badge-top);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--badge-gap);
+      height: 37px;
+      padding: 0 16px 0 19px;
+      border-radius: 999px;
+      background: var(--badge-bg);
+      backdrop-filter: blur(7px) saturate(120%);
+      -webkit-backdrop-filter: blur(7px) saturate(120%);
+      box-shadow: 0 1px 2px rgba(0,0,0,.18), 0 6px 18px rgba(0,0,0,.14);
+      color: #fff;
+      font-size: var(--badge-fs);
+      font-weight: var(--badge-fw);
+      letter-spacing: var(--badge-ls);
+      word-spacing: var(--badge-ws);
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .badge-icon {
+      width: 17px;
+      height: 16.27px;
+      position: relative;
+      top: -1px;
+      flex-shrink: 0;
+      fill: #fff;
+    }
+
+    .hl-wrap {
+      position: static;
+    }
+
+    .hl {
+      position: absolute;
+      font-family: 'Eloquia', sans-serif;
+      font-variation-settings: 'wght' var(--hl-wght);
+      line-height: var(--hl-lh);
+      color: var(--ink);
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    #hl1 {
+      left: var(--hl1-left);
+      top: var(--hl1-top);
+      font-size: var(--hl1-fs);
+      letter-spacing: var(--hl1-ls);
+      word-spacing: var(--hl1-ws);
+    }
+
+    #hl2 {
+      left: var(--hl2-left);
+      top: var(--hl2-top);
+      font-size: var(--hl2-fs);
+      letter-spacing: var(--hl2-ls);
+    }
+
+    .pane {
+      position: absolute;
+      left: 57.1038%;
+      right: 0;
+      top: 0;
+      bottom: 0;
+    }
+
+    .card {
+      position: absolute;
+      left: 1px;
+      top: 14px;
+      width: 613px;
+      height: 922px;
+      border-radius: 26px;
+      overflow: hidden;
+      background: rgba(254,254,254,.90);
+      backdrop-filter: blur(28px) saturate(160%);
+      -webkit-backdrop-filter: blur(28px) saturate(160%);
+      border: 1px solid rgba(0,0,0,.036);
+      box-shadow: var(--card-shadow);
+    }
+
+    .card-in {
+      position: relative;
+      width: 613px;
+      height: 922px;
+      transform-origin: left top;
+    }
+
+    .col {
+      position: absolute;
+      left: 62px;
+      width: 488px;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    #h1 {
+      top: var(--h1-top);
+      font-family: 'Eloquia', sans-serif;
+      font-variation-settings: 'wght' var(--h1-wght);
+      font-size: var(--h1-fs);
+      letter-spacing: var(--h1-ls);
+      word-spacing: var(--h1-ws);
+      color: var(--h1-color);
+      line-height: 1.08;
+    }
+
+    #sub {
+      top: var(--sub-top);
+      font-size: var(--sub-fs);
+      letter-spacing: var(--sub-ls);
+      word-spacing: var(--sub-ws);
+      color: var(--sub-grey);
+      font-weight: var(--sub-fw);
+      line-height: 1.25;
+    }
+    #sub b {
+      font-weight: var(--sub-fwb);
+      color: #2c3343;
+    }
+
+    .field {
+      position: absolute;
+      left: 62px;
+      width: 489px;
+      display: flex;
+      align-items: center;
+      border-radius: 12px;
+    }
+
+    .field input {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: transparent;
+      outline: none;
+      font-family: inherit;
+      color: var(--ink);
+    }
+
+    #email {
+      top: 203px;
+      height: 61px;
+      background: var(--inputFill);
+      border: 1.5px solid var(--inputBorder);
+      padding: 0 var(--fieldpad) 0 var(--eph-left);
+    }
+    #email input {
+      font-size: var(--eph-fs);
+      letter-spacing: var(--eph-ls);
+      font-weight: var(--eph-fw);
+      word-spacing: var(--eph-ws);
+    }
+    #email input::placeholder {
+      color: var(--ph);
+      opacity: 1;
+    }
+
+    #pw {
+      top: 273.5px;
+      height: 59px;
+      background: var(--pwFill);
+      border: 0;
+      padding: 0 var(--fieldpad) 0 var(--pph-left);
+    }
+    #pw input {
+      font-size: var(--pph-fs);
+      letter-spacing: var(--pph-ls);
+      font-weight: var(--pph-fw);
+    }
+    #pw input::placeholder {
+      color: var(--ph);
+      opacity: 1;
+    }
+
+    #loginBtn {
+      position: absolute;
+      left: 62px;
+      top: 366px;
+      width: 489px;
+      height: 65.5px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, var(--btn1) 0%, var(--btn2) 100%);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--login-gap);
+      padding-left: var(--login-padl);
+      padding-right: 4px;
+      box-shadow: 0 8px 20px rgba(18,26,34,.16), 0 2px 5px rgba(18,26,34,.10);
+      font-size: var(--login-fs);
+      font-weight: var(--login-fw);
+      letter-spacing: var(--login-ls);
+      border: none;
+      cursor: pointer;
+      user-select: none;
+      transition: transform .18s cubic-bezier(.2,.7,.3,1), box-shadow .18s ease, filter .18s ease;
+    }
+    #loginBtn:hover {
+      filter: brightness(1.12);
+    }
+    #loginBtn:active {
+      transform: translateY(1px);
+    }
+
+    .arrow-icon {
+      width: var(--arrow-w);
+      height: var(--arrow-w);
+      display: block;
+      flex-shrink: 0;
+    }
+
+    .divider {
+      position: absolute;
+      left: 63px;
+      top: var(--div-top);
+      width: 487px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .divider i {
+      height: 1.5px;
+      background: var(--divider);
+      display: block;
+    }
+    .divider i:first-child {
+      flex: 0 0 var(--or-line-l);
+    }
+    .divider i:last-child {
+      flex: 0 0 var(--or-line-r);
+    }
+    .divider b {
+      flex: 1 1 auto;
+      text-align: center;
+      font-size: var(--or-fs);
+      font-weight: var(--or-fw);
+      letter-spacing: var(--or-ls);
+      color: var(--or);
+      transform: translate(var(--or-dx), var(--or-dy));
+      user-select: none;
+    }
+
+    #gBtn {
+      position: absolute;
+      left: 62px;
+      top: 535px;
+      width: 489px;
+      height: 59.5px;
+      border: 1.5px solid var(--gBorder);
+      border-radius: 999px;
+      background: rgba(255,255,255,.92);
+      box-shadow: 0 1px 2px rgba(0,0,0,.03);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--g-gap);
+      color: var(--gtext);
+      font-size: var(--gt-fs);
+      font-weight: var(--gt-fw);
+      letter-spacing: var(--gt-ls);
+      word-spacing: var(--gt-ws);
+      cursor: pointer;
+      user-select: none;
+      transition: background .18s ease, box-shadow .18s ease, transform .18s cubic-bezier(.2,.7,.3,1);
+    }
+    #gBtn span {
+      transform: translateY(var(--gt-dy));
+    }
+    #gBtn:hover {
+      background: #fff;
+      box-shadow: 0 3px 10px rgba(0,0,0,.07);
+    }
+    #gBtn:active {
+      transform: translateY(1px);
+    }
+
+    .google-icon {
+      width: var(--g-icon);
+      height: var(--g-icon);
+      display: block;
+      flex-shrink: 0;
+    }
+
+    #bottom {
+      position: absolute;
+      left: 62px;
+      width: 489px;
+      top: var(--bt-top);
+      text-align: center;
+      font-size: var(--bt-fs);
+      font-weight: var(--bt-fw);
+      letter-spacing: var(--bt-ls);
+      word-spacing: var(--bt-ws);
+      color: var(--bottom);
+    }
+    #bottom a {
+      color: #000;
+      font-weight: var(--bt-fwb);
+      text-decoration: underline;
+      text-underline-offset: var(--bt-uo);
+      text-decoration-thickness: 2px;
+      cursor: pointer;
+    }
+
+    :focus-visible {
+      outline: 2px solid #2b6cb0;
+      outline-offset: 2px;
+    }
+
+    /* -------------------------------------------------------------
+       5. TABLET PORTRAIT MODE (body.tabport)
+       ------------------------------------------------------------- */
+    body.tabport .stage {
+      position: fixed;
+      inset: 0;
+    }
+    body.tabport .photo {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: var(--band-h, 42.5vh);
+    }
+    body.tabport .photo-img--tall {
+      display: none;
+    }
+    body.tabport .photo-img--wide {
+      display: block;
+      object-position: 50% 50%;
+    }
+    body.tabport .hero {
+      position: absolute;
+      left: var(--side-margin, 5vw);
+      bottom: var(--tp-hero-b, 30px);
+      width: auto;
+      height: auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--tp-hero-gap, -10px);
+      transform: none !important;
+    }
+    body.tabport .badge {
+      position: static;
+      transform: scale(var(--badge-k, 1));
+      transform-origin: left bottom;
+    }
+    body.tabport .hl-wrap {
+      display: flex;
+      flex-direction: column;
+      width: var(--hl-measure, 400px);
+    }
+    body.tabport .hl {
+      position: static;
+      font-size: var(--tp-hero-fs, 38px);
+      line-height: var(--tp-hero-lh, 1.12);
+    }
+    body.tabport .pane {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: var(--band-h, 42.5vh);
+      bottom: 0;
+    }
+    body.tabport .card {
+      position: absolute;
+      inset: 0;
+      width: auto;
+      height: auto;
+      border-radius: 0;
+      border: 0;
+      background: #fff;
+      box-shadow: none;
+    }
+    body.tabport .card-in {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      transform: none !important;
+      max-width: 580px;
+      margin: 0 auto;
+    }
+    body.tabport .col {
+      left: var(--tp-pad, 40px);
+      width: calc(100% - (var(--tp-pad, 40px) * 2));
+    }
+    body.tabport .field {
+      left: var(--tp-pad, 40px);
+      width: calc(100% - (var(--tp-pad, 40px) * 2));
+    }
+    body.tabport #h1 {
+      top: var(--tp-h1-top);
+      font-size: var(--tp-h1-fs);
+      letter-spacing: calc(var(--h1-ls) / var(--h1-fs) * var(--tp-h1-fs));
+    }
+    body.tabport #sub {
+      top: var(--tp-sub-top);
+      font-size: var(--tp-sub-fs);
+    }
+    body.tabport #email {
+      top: var(--tp-em-top);
+      height: var(--tp-em-h);
+    }
+    body.tabport #pw {
+      top: var(--tp-pw-top);
+      height: var(--tp-pw-h);
+    }
+    body.tabport #loginBtn {
+      left: var(--tp-pad, 40px);
+      width: calc(100% - (var(--tp-pad, 40px) * 2));
+      top: var(--tp-btn-top);
+      height: var(--tp-btn-h);
+      font-size: var(--tp-btn-fs);
+    }
+    body.tabport .divider {
+      left: var(--tp-pad, 40px);
+      width: calc(100% - (var(--tp-pad, 40px) * 2));
+      top: var(--tp-div-top);
+    }
+    body.tabport #gBtn {
+      left: var(--tp-pad, 40px);
+      width: calc(100% - (var(--tp-pad, 40px) * 2));
+      top: var(--tp-g-top);
+      height: var(--tp-g-h);
+      font-size: var(--tp-gt-fs);
+    }
+    body.tabport #bottom {
+      left: var(--tp-pad, 40px);
+      width: calc(100% - (var(--tp-pad, 40px) * 2));
+      top: var(--tp-bt-top);
+      font-size: var(--tp-bt-fs);
+    }
+
+    /* -------------------------------------------------------------
+       6. MOBILE / PHONE MODE (body.stacked)
+       ------------------------------------------------------------- */
+    body.stacked {
+      height: auto;
+      min-height: 100%;
+      overflow-y: auto;
+      background: #fff;
+    }
+    body.stacked .stage {
+      position: relative;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+    }
+    body.stacked .photo {
+      position: relative;
+      width: 100%;
+      height: var(--mobile-hero-h, clamp(244px, 34svh, 304px));
+      flex-shrink: 0;
+    }
+    body.stacked .photo-img--tall {
+      display: none;
+    }
+    body.stacked .photo-img--wide {
+      display: block;
+      object-position: 64% 48%;
+      transform: scale(1.015);
+    }
+    body.stacked .scrim {
+      display: block;
+    }
+    body.stacked .hero {
+      position: absolute;
+      left: clamp(16px, 5vw, 24px);
+      bottom: 40px;
+      width: auto;
+      height: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transform: none !important;
+    }
+    body.stacked .badge {
+      position: static;
+      height: 31px;
+      padding: 0 12px;
+      background: rgba(24,27,30,.82);
+      box-shadow: 0 4px 16px rgba(0,0,0,.18);
+      font-size: 11px;
+    }
+    body.stacked .hl-wrap {
+      display: flex;
+      flex-direction: column;
+    }
+    body.stacked .hl {
+      position: static;
+      color: #fff;
+      font-size: clamp(30px, 8.8vw, 38px);
+      letter-spacing: -.035em;
+      line-height: .96;
+      text-shadow: 0 2px 18px rgba(0,0,0,.32);
+    }
+    body.stacked .pane {
+      position: relative;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      flex: 1 1 auto;
+    }
+    body.stacked .card {
+      position: relative;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: auto;
+      min-height: calc(100svh - var(--mobile-hero-h, 280px) + 28px);
+      margin: -28px 0 0;
+      border-radius: 28px 28px 0 0;
+      background: #fff;
+      border: 0;
+      box-shadow: 0 -10px 28px rgba(20,28,36,.10);
+      overflow: visible;
+    }
+    body.stacked .card-in {
+      width: 100%;
+      height: auto;
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 36px clamp(24px, 7vw, 38px) max(30px, env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 16px;
+      transform: none !important;
+    }
+    body.stacked .col,
+    body.stacked .field,
+    body.stacked #loginBtn,
+    body.stacked .divider,
+    body.stacked #gBtn,
+    body.stacked #bottom {
+      position: static;
+      left: auto;
+      top: auto;
+      width: 100%;
+    }
+    body.stacked #h1 {
+      font-size: clamp(31px, 8.8vw, 38px);
+      text-align: center;
+      margin-bottom: -4px;
+    }
+    body.stacked #sub {
+      font-size: 15px;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    body.stacked #email {
+      height: 56px;
+    }
+    body.stacked #pw {
+      height: 56px;
+    }
+    body.stacked .field input {
+      font-size: 16px !important; /* Prevents iOS auto-zoom */
+    }
+    body.stacked #loginBtn {
+      height: 58px;
+      font-size: 16px;
+      margin-top: 4px;
+    }
+    body.stacked .divider {
+      margin: 6px 0;
+    }
+    body.stacked #gBtn {
+      height: 56px;
+      font-size: 16px;
+    }
+    body.stacked #bottom {
+      font-size: 14px;
+      text-align: center;
+      margin-top: 6px;
+    }
+
+    @media (max-width: 370px) {
+      body.stacked .photo {
+        height: 232px;
+      }
+      body.stacked .card-in {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+      body.stacked .hl {
+        font-size: 30px;
+      }
+    }
+
+    @media (max-height: 520px) and (orientation: landscape) {
+      body.stacked .photo {
+        height: 208px;
+      }
+      body.stacked .card-in {
+        justify-content: flex-start;
+      }
+    }
+
+    /* -------------------------------------------------------------
+       7. ENTRANCE ANIMATION FIRST-FRAME GUARD
+       ------------------------------------------------------------- */
+    html.entry-pending .card,
+    html.entry-pending .badge,
+    html.entry-pending #hl1,
+    html.entry-pending #hl2,
+    html.entry-pending #h1,
+    html.entry-pending #sub,
+    html.entry-pending #email,
+    html.entry-pending #pw,
+    html.entry-pending #loginBtn,
+    html.entry-pending .divider,
+    html.entry-pending #gBtn,
+    html.entry-pending #bottom {
+      opacity: 0;
+      will-change: transform, opacity, clip-path;
+    }
+
+    html.entry-pending .card {
+      transform: translateY(12px) scale(.988);
+    }
+    html.entry-pending .badge {
+      transform: translateY(8px);
+    }
+    html.entry-pending #hl1,
+    html.entry-pending #hl2 {
+      transform: translateY(16px);
+      clip-path: inset(100% 0 0 0);
+    }
+    html.entry-pending #h1,
+    html.entry-pending #sub {
+      transform: translateY(10px);
+    }
+    html.entry-pending #email,
+    html.entry-pending #pw,
+    html.entry-pending #loginBtn {
+      transform: translateY(8px);
+    }
+    html.entry-pending .divider {
+      transform: translateY(6px);
+    }
+    html.entry-pending #gBtn {
+      transform: translateY(8px);
+    }
+    html.entry-pending #bottom {
+      transform: translateY(6px);
+    }
+
+    @media (max-width: 699px) {
+      html.entry-pending .card {
+        transform: translateY(14px);
+      }
+      html.entry-pending #hl1,
+      html.entry-pending #hl2 {
+        transform: translateY(12px);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        transition: none !important;
+        animation: none !important;
+      }
+      html.entry-pending .card,
+      html.entry-pending .badge,
+      html.entry-pending #hl1,
+      html.entry-pending #hl2,
+      html.entry-pending #h1,
+      html.entry-pending #sub,
+      html.entry-pending #email,
+      html.entry-pending #pw,
+      html.entry-pending #loginBtn,
+      html.entry-pending .divider,
+      html.entry-pending #gBtn,
+      html.entry-pending #bottom {
+        opacity: 1 !important;
+        transform: none !important;
+        clip-path: none !important;
+        will-change: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage">
+    <!-- Left Hero Art (Falcon Video) -->
+    <section class="photo">
+      <video class="photo-img photo-img--tall" autoplay muted loop playsinline preload="auto" poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1177 1336'%3E%3Crect width='100%25' height='100%25' fill='%230a0e14'/%3E%3C/svg%3E">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260813_052122_e77a27e6-17f1-4794-889b-3ceaa0e9e8cb.mp4" type="video/mp4">
+      </video>
+      <video class="photo-img photo-img--wide" aria-hidden="true" autoplay muted loop playsinline preload="auto" poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1177 1336'%3E%3Crect width='100%25' height='100%25' fill='%230a0e14'/%3E%3C/svg%3E">
+        <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260813_052122_e77a27e6-17f1-4794-889b-3ceaa0e9e8cb.mp4" type="video/mp4">
+      </video>
+      <div class="scrim"></div>
+      <div class="hero" id="hero">
+        <div class="badge">
+          <!-- Badge Lightning/Signal glyph -->
+          <svg class="badge-icon" viewBox="0 0 582 557" fill-rule="evenodd" xmlns="http://www.w3.org/2000/svg">
+            <path d="M449.0 0.0 435.0 0.0 415.0 10.0 200.0 249.0 187.0 276.0 189.0 299.0 212.0 326.0 232.0 332.0 289.0 334.0 289.0 516.0 301.0 543.0 324.0 556.0 346.0 556.0 374.0 536.0 573.0 311.0 582.0 288.0 579.0 264.0 559.0 240.0 539.0 233.0 478.0 230.0 478.0 32.0 470.0 13.0ZM442.0 38.0 446.0 250.0 466.0 267.0 540.0 270.0 547.0 285.0 341.0 520.0 332.0 522.0 324.0 514.0 321.0 314.0 307.0 300.0 295.0 297.0 233.0 297.0 224.0 291.0 221.0 282.0ZM1.0 67.0 4.0 81.0 17.0 90.0 216.0 90.0 223.0 87.0 232.0 74.0 228.0 57.0 215.0 49.0 18.0 49.0 5.0 57.0ZM0.0 285.0 4.0 300.0 17.0 308.0 105.0 308.0 118.0 299.0 121.0 291.0 119.0 278.0 111.0 270.0 103.0 267.0 17.0 267.0 4.0 275.0ZM1.0 495.0 4.0 511.0 10.0 517.0 23.0 520.0 179.0 520.0 191.0 516.0 200.0 500.0 196.0 488.0 182.0 479.0 18.0 479.0 9.0 483.0Z"/>
+          </svg>
+          <span id="badgeTxt">VIVLIO</span>
+        </div>
+        <div class="hl-wrap">
+          <span class="hl" id="hl1">READ BOOKS</span>
+          <span class="hl" id="hl2">SEAMLESSLY ONLINE</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Login Card -->
+    <section class="pane">
+      <div class="card" id="card">
+        <div class="card-in" id="cardIn">
+          <h1 class="col center" id="h1">Welcome Harsh Sir!</h1>
+          <p class="col center" id="sub"><b>Log in</b> to continue monitoring your signals.</p>
+          
+          <div class="field" id="email">
+            <input type="email" autocomplete="email" aria-label="Email address" placeholder="Eg. harshhjhha@gmail.com">
+          </div>
+
+          <div class="field" id="pw">
+            <input type="password" autocomplete="current-password" aria-label="Password" placeholder="Password">
+          </div>
+
+          <button id="loginBtn" type="button">
+            <span>Login</span>
+            <svg class="arrow-icon" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 11h15.4M11 3.3l7.7 7.7-7.7 7.7" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+
+          <div class="divider">
+            <i></i>
+            <b>OR</b>
+            <i></i>
+          </div>
+
+          <button id="gBtn" type="button">
+            <svg class="google-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+            </svg>
+            <span>Sign in with Google</span>
+          </button>
+
+          <p id="bottom">Don&#8217;t have an account? <a href="#start-free">Start Free</a></p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- -------------------------------------------------------------
+       8. RESPONSIVE LAYOUT ENGINE (IIFE)
+       ------------------------------------------------------------- -->
+  <script>
+    (function(){
+      var REF_W=1464, REF_H=949, PHOTO_W=836, PANE_W=628, CARD_W=613, CARD_H=922;
+      var CONTENT_H=697;
+      var IMG_W=1177, IMG_H=1336, IMG_REF_SCALE=836/1177;
+      var PANE_RATIO=PANE_W/REF_W;
+      var HERO_W=681, HERO_H=219;
+      var REF_CARD_ASPECT=692/855;
+      var RAMP_HI=1280, RAMP_LO=1000, PHOTO_MIN=0.42;
+      var RAMP_LO2=820, PHOTO_MIN2=0.36;
+      var TP={"pad":0.1076,"h1Top":0.08656,"h1Fs":0.06839,"subTop":0.17368,"subFs":0.0309,"emTop":0.25435,"emH":0.10257,"emR":0.0202,"ephFs":0.02702,"ephPad":0.0332,"pwTop":0.36851,"pwH":0.10839,"btnTop":0.50435,"btnH":0.10981,"btnFs":0.0275,"arrow":0.026,"btnGap":0.02,"divTop":0.68222,"orFs":0.02245,"orPad":0.051,"divH":0.0026,"gTop":0.76445,"gH":0.09966,"gIcon":0.032,"gtFs":0.03205,"gGap":0.026,"btTop":0.89668,"btFs":0.02876,"heroFs":0.1058,"badgeH":0.0742,"heroLh":1.1246,"heroBot":0.06493,"heroGap":-0.30423,"heroSide":0.0525};
+
+      var mqLandscape = window.matchMedia('(min-width:700px) and (min-aspect-ratio:51/50)');
+      var mqPortrait  = window.matchMedia('(min-width:700px) and (max-aspect-ratio:51/50)');
+
+      var photoEl = document.querySelector('.photo');
+      var paneEl = document.querySelector('.pane');
+      var cardEl = document.getElementById('card');
+      var cardIn = document.getElementById('cardIn');
+      var heroEl = document.getElementById('hero');
+
+      var currentMode = '';
+
+      function clearInline() {
+        if (photoEl) photoEl.style.cssText = '';
+        if (paneEl) paneEl.style.cssText = '';
+        if (cardEl) cardEl.style.cssText = '';
+        if (cardIn) cardIn.style.cssText = '';
+        if (heroEl) heroEl.style.cssText = '';
+      }
+
+      function photoRatio(vw) {
+        if (vw >= RAMP_HI) return 1 - PANE_RATIO;
+        if (vw >= RAMP_LO) {
+          var t = (vw - RAMP_LO) / (RAMP_HI - RAMP_LO);
+          return PHOTO_MIN + t * ((1 - PANE_RATIO) - PHOTO_MIN);
+        }
+        if (vw >= RAMP_LO2) {
+          var t2 = (vw - RAMP_LO2) / (RAMP_LO - RAMP_LO2);
+          return PHOTO_MIN2 + t2 * (PHOTO_MIN - PHOTO_MIN2);
+        }
+        return PHOTO_MIN2;
+      }
+
+      function headlineMeasure() {
+        var dummy = document.createElement('span');
+        dummy.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font-family:Eloquia,sans-serif;font-variation-settings:"wght" 578;font-size:69px;letter-spacing:-1.936px;';
+        dummy.textContent = 'Find Signal to Action Instantly';
+        document.body.appendChild(dummy);
+        var w = dummy.offsetWidth;
+        document.body.removeChild(dummy);
+        return w || 700;
+      }
+
+      function setMode(mode) {
+        if (currentMode !== mode) {
+          clearInline();
+          document.body.classList.remove('tabport', 'stacked');
+          if (mode === 'tabport') document.body.classList.add('tabport');
+          if (mode === 'phone') document.body.classList.add('stacked');
+          currentMode = mode;
+        }
+      }
+
+      function layout() {
+        var vw = window.innerWidth;
+        var vh = window.innerHeight;
+
+        if (vw < 700) {
+          setMode('phone');
+          return;
+        }
+
+        if (mqLandscape.matches) {
+          setMode('land');
+          var pr = photoRatio(vw);
+          var photoW = vw * pr;
+          var paneW = vw - photoW;
+
+          photoEl.style.width = (pr * 100) + '%';
+          paneEl.style.left = (pr * 100) + '%';
+
+          // placeCard
+          var cs = Math.min(paneW / PANE_W, vh / CONTENT_H);
+          var gapL = 1 * cs;
+          var mT = 14 * cs;
+          var mB = 13 * cs;
+          var mR = 14 * cs;
+          var cw = Math.max(CARD_W * cs, paneW - gapL - mR);
+          var ch = vh - mT - mB;
+          var cr = 26 * cs;
+          var cb = Math.max(1, cs);
+
+          cardEl.style.left = gapL + 'px';
+          cardEl.style.top = mT + 'px';
+          cardEl.style.width = cw + 'px';
+          cardEl.style.height = ch + 'px';
+          cardEl.style.borderRadius = cr + 'px';
+          cardEl.style.borderWidth = cb + 'px';
+
+          var cardScale = Math.min(cw / CARD_W, ch / CARD_H);
+          var tx = (cw - CARD_W * cardScale) / 2;
+          var ty = Math.max(0, (ch - CARD_H * cardScale) / 2);
+          cardIn.style.transform = 'translate(' + tx + 'px,' + ty + 'px) scale(' + cardScale + ')';
+
+          // seatHero
+          var imgScale = Math.max(photoW / IMG_W, vh / IMG_H);
+          var s = Math.min(imgScale / IMG_REF_SCALE, (photoW * 0.92) / HERO_W);
+          heroEl.style.transform = 'scale(' + s + ')';
+          heroEl.style.bottom = '0px';
+
+        } else if (mqPortrait.matches) {
+          setMode('tabport');
+          var bandH = Math.round(vh * 0.425);
+          var sideM = Math.round(vw * 0.0525);
+          var cardH = vh - bandH;
+          var cardW = vw;
+          var S = Math.min(cardH, cardW * REF_CARD_ASPECT);
+
+          document.documentElement.style.setProperty('--band-h', bandH + 'px');
+          document.documentElement.style.setProperty('--side-margin', sideM + 'px');
+          document.documentElement.style.setProperty('--badge-k', (bandH * TP.badgeH / 37).toString());
+          document.documentElement.style.setProperty('--tp-hero-b', Math.round(bandH * TP.heroBot) + 'px');
+          document.documentElement.style.setProperty('--tp-hero-gap', Math.round(bandH * TP.heroGap) + 'px');
+          document.documentElement.style.setProperty('--tp-hero-fs', Math.round(bandH * TP.heroFs) + 'px');
+          document.documentElement.style.setProperty('--tp-hero-lh', TP.heroLh.toString());
+
+          var hlMeas = Math.round(headlineMeasure() * 0.61);
+          document.documentElement.style.setProperty('--hl-measure', hlMeas + 'px');
+
+          document.documentElement.style.setProperty('--tp-pad', Math.round(cardW * TP.pad) + 'px');
+          document.documentElement.style.setProperty('--tp-h1-top', Math.round(cardH * TP.h1Top) + 'px');
+          document.documentElement.style.setProperty('--tp-h1-fs', Math.round(S * TP.h1Fs) + 'px');
+          document.documentElement.style.setProperty('--tp-sub-top', Math.round(cardH * TP.subTop) + 'px');
+          document.documentElement.style.setProperty('--tp-sub-fs', Math.round(S * TP.subFs) + 'px');
+          document.documentElement.style.setProperty('--tp-em-top', Math.round(cardH * TP.emTop) + 'px');
+          document.documentElement.style.setProperty('--tp-em-h', Math.round(cardH * TP.emH) + 'px');
+          document.documentElement.style.setProperty('--tp-pw-top', Math.round(cardH * TP.pwTop) + 'px');
+          document.documentElement.style.setProperty('--tp-pw-h', Math.round(cardH * TP.pwH) + 'px');
+          document.documentElement.style.setProperty('--tp-btn-top', Math.round(cardH * TP.btnTop) + 'px');
+          document.documentElement.style.setProperty('--tp-btn-h', Math.round(cardH * TP.btnH) + 'px');
+          document.documentElement.style.setProperty('--tp-btn-fs', Math.round(S * TP.btnFs) + 'px');
+          document.documentElement.style.setProperty('--tp-div-top', Math.round(cardH * TP.divTop) + 'px');
+          document.documentElement.style.setProperty('--tp-g-top', Math.round(cardH * TP.gTop) + 'px');
+          document.documentElement.style.setProperty('--tp-g-h', Math.round(cardH * TP.gH) + 'px');
+          document.documentElement.style.setProperty('--tp-gt-fs', Math.round(S * TP.gtFs) + 'px');
+          document.documentElement.style.setProperty('--tp-bt-top', Math.round(cardH * TP.btTop) + 'px');
+          document.documentElement.style.setProperty('--tp-bt-fs', Math.round(S * TP.btFs) + 'px');
+        }
+      }
+
+      window.addEventListener('resize', layout, { passive: true });
+      window.addEventListener('orientationchange', layout, { passive: true });
+      mqLandscape.addEventListener('change', layout);
+      mqPortrait.addEventListener('change', layout);
+
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(layout);
+      }
+      layout();
+    })();
+  </script>
+
+  <!-- -------------------------------------------------------------
+       9. ENTRANCE ANIMATION ENGINE (WAAPI)
+       ------------------------------------------------------------- -->
+  <script>
+    (function(){
+      var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      function releaseEntrance() {
+        if (window.__entryFallback) clearTimeout(window.__entryFallback);
+        document.documentElement.classList.remove('entry-pending');
+      }
+
+      if (reduceMotion || !Element.prototype.animate) {
+        releaseEntrance();
+        return;
+      }
+
+      var ease = 'cubic-bezier(.16, 1, .3, 1)';
+      var softEase = 'cubic-bezier(.22, 1, .36, 1)';
+      var compact = window.matchMedia('(max-width: 699px)').matches;
+
+      var steps = [
+        { sel: '#card', delay: 40, dur: 820, ease: ease, from: { opacity: 0, transform: compact ? 'translateY(14px)' : 'translateY(12px) scale(.988)' } },
+        { sel: '.badge', delay: 120, dur: 480, ease: softEase, from: { opacity: 0, transform: 'translateY(8px)' } },
+        { sel: '#hl1', delay: 240, dur: 760, ease: ease, from: { opacity: 0, transform: compact ? 'translateY(12px)' : 'translateY(16px)', clipPath: 'inset(100% 0 0 0)' }, toClip: true },
+        { sel: '#hl2', delay: 330, dur: 760, ease: ease, from: { opacity: 0, transform: compact ? 'translateY(12px)' : 'translateY(16px)', clipPath: 'inset(100% 0 0 0)' }, toClip: true },
+        { sel: '#h1', delay: 470, dur: 620, ease: ease, from: { opacity: 0, transform: 'translateY(10px)' } },
+        { sel: '#sub', delay: 570, dur: 560, ease: ease, from: { opacity: 0, transform: 'translateY(10px)' } },
+        { sel: '#email', delay: 720, dur: 520, ease: softEase, from: { opacity: 0, transform: 'translateY(8px)' } },
+        { sel: '#pw', delay: 790, dur: 520, ease: softEase, from: { opacity: 0, transform: 'translateY(8px)' } },
+        { sel: '#loginBtn', delay: 930, dur: 560, ease: ease, from: { opacity: 0, transform: 'translateY(8px)' } },
+        { sel: '.divider', delay: 1060, dur: 440, ease: softEase, from: { opacity: 0, transform: 'translateY(6px)' } },
+        { sel: '#gBtn', delay: 1150, dur: 540, ease: ease, from: { opacity: 0, transform: 'translateY(8px)' } },
+        { sel: '#bottom', delay: 1260, dur: 500, ease: softEase, from: { opacity: 0, transform: 'translateY(6px)' } }
+      ];
+
+      function runTimeline() {
+        var animations = [];
+        steps.forEach(function(s){
+          var el = document.querySelector(s.sel);
+          if (!el) return;
+          var fromKeyframe = Object.assign({}, s.from);
+          var toKeyframe = { opacity: 1, transform: 'none' };
+          if (s.toClip) {
+            toKeyframe.clipPath = 'inset(0 0 0 0)';
+          }
+
+          var anim = el.animate([fromKeyframe, toKeyframe], {
+            delay: s.delay,
+            duration: s.dur,
+            easing: s.ease,
+            fill: 'both'
+          });
+          animations.push(anim);
+        });
+
+        // Drop CSS guard immediately
+        releaseEntrance();
+
+        Promise.allSettled(animations.map(function(a){ return a.finished; })).then(function(){
+          animations.forEach(function(a){ a.cancel(); });
+          animations.length = 0;
+        });
+      }
+
+      var fontPromise = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+      var timeoutPromise = new Promise(function(r){ setTimeout(r, 650); });
+
+      Promise.race([fontPromise, timeoutPromise]).then(function(){
+        requestAnimationFrame(function(){
+          requestAnimationFrame(runTimeline);
+        });
+      });
+    })();
+  </script>
+
+  <!-- -------------------------------------------------------------
+       10. VIVLIO AUTHENTICATION & REDIRECT CONTROLLER
+       ------------------------------------------------------------- -->
+  <script>
+    (function(){
+      var emailInput = document.querySelector('#email input');
+      var pwInput = document.querySelector('#pw input');
+      var loginBtn = document.getElementById('loginBtn');
+      var h1El = document.getElementById('h1');
+      var subEl = document.getElementById('sub');
+
+      // Autofill default values if desired
+      if (emailInput && !emailInput.value) emailInput.value = 'harsh';
+      if (pwInput && !pwInput.value) pwInput.value = '0219';
+
+      function handleLogin() {
+        var usernameOrEmail = emailInput ? emailInput.value.trim() : '';
+        var password = pwInput ? pwInput.value.trim() : '';
+
+        if (!usernameOrEmail || !password) {
+          if (subEl) {
+            subEl.innerHTML = '<span style="color:#e53e3e">Please enter your username and password.</span>';
+          }
+          return;
+        }
+
+        if (loginBtn) {
+          loginBtn.style.opacity = '0.7';
+          loginBtn.style.pointerEvents = 'none';
+          loginBtn.querySelector('span').textContent = 'Authenticating...';
+        }
+
+        fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username_or_email: usernameOrEmail,
+            password: password
+          })
+        })
+        .then(function(res){
+          if (!res.ok) throw new Error('Invalid credentials');
+          return res.json();
+        })
+        .then(function(data){
+          // Store token in localStorage for Vivlio app session
+          localStorage.setItem('vivlio_token', data.access_token);
+          localStorage.setItem('vivlio_user', JSON.stringify(data.user));
+
+          if (subEl) {
+            subEl.innerHTML = '<span style="color:#38a169;font-weight:700">Access Granted! Entering Library...</span>';
+          }
+          if (loginBtn) {
+            loginBtn.querySelector('span').textContent = 'Success!';
+          }
+
+          setTimeout(function(){
+            window.location.href = '/';
+          }, 600);
+        })
+        .catch(function(err){
+          // Direct fallback for master user 'harsh' / '0219'
+          if ((usernameOrEmail === 'harsh' || usernameOrEmail === 'harshhjhha@gmail.com') && password === '0219') {
+            localStorage.setItem('vivlio_token', 'master-harsh-token');
+            localStorage.setItem('vivlio_user', JSON.stringify({
+              id: 'user-harsh',
+              username: 'harsh',
+              email: 'harsh@vivlio.library'
+            }));
+
+            if (subEl) {
+              subEl.innerHTML = '<span style="color:#38a169;font-weight:700">Welcome Harsh Sir! Entering Library...</span>';
+            }
+            setTimeout(function(){
+              window.location.href = '/';
+            }, 600);
+            return;
+          }
+
+          if (subEl) {
+            subEl.innerHTML = '<span style="color:#e53e3e">Invalid credentials. Master user only.</span>';
+          }
+          if (loginBtn) {
+            loginBtn.style.opacity = '1';
+            loginBtn.style.pointerEvents = 'auto';
+            loginBtn.querySelector('span').textContent = 'Login';
+          }
+        });
+      }
+
+      if (loginBtn) {
+        loginBtn.addEventListener('click', handleLogin);
+      }
+
+      if (pwInput) {
+        pwInput.addEventListener('keydown', function(e){
+          if (e.key === 'Enter') handleLogin();
+        });
+      }
+
+      if (emailInput) {
+        emailInput.addEventListener('keydown', function(e){
+          if (e.key === 'Enter') handleLogin();
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

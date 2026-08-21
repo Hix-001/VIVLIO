@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>🏛️ Vivlio — Medieval 3D Library & Walking Avatar</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://esm.sh/three@0.160.0",
+        "three/addons/": "https://esm.sh/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      overflow: hidden;
+      background: #0a0807;
+      font-family: "Cormorant Garamond", serif;
+      color: #f5efe6;
+      user-select: none;
+    }
+
+    #canvas-container {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      cursor: crosshair;
+    }
+
+    /* ===== HUD Overlay ===== */
+    #hud {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    #hud-controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(22, 18, 15, 0.94);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      border-radius: 999px;
+      padding: 10px 24px;
+      pointer-events: auto;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.85);
+    }
+
+    #hud-controls button {
+      background: transparent;
+      border: none;
+      color: #c4b5a2;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #hud-controls button:hover {
+      background: rgba(212, 175, 55, 0.2);
+      color: #d4af37;
+      transform: scale(1.1);
+    }
+
+    #hud-controls button.active {
+      background: rgba(212, 175, 55, 0.28);
+      color: #d4af37;
+    }
+
+    #hud-info {
+      color: #9a8a7a;
+      font-size: 12px;
+      font-family: "JetBrains Mono", monospace;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      min-width: 130px;
+      text-align: center;
+    }
+
+    #hud-title {
+      font-family: "Instrument Serif", serif;
+      font-size: 22px;
+      color: #f5efe6;
+      letter-spacing: 0.04em;
+      text-align: center;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+    }
+
+    /* ===== Audio Controls ===== */
+    #audio-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 100;
+      background: rgba(22, 18, 15, 0.94);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      border-radius: 16px;
+      padding: 16px 20px;
+      min-width: 230px;
+      pointer-events: auto;
+      box-shadow: 0 10px 36px rgba(0, 0, 0, 0.75);
+      transition: transform 0.4s ease, opacity 0.4s ease;
+    }
+
+    #audio-panel.hidden {
+      transform: translateX(120%);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #audio-panel .track-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    #audio-panel .track-btn {
+      background: rgba(74, 58, 42, 0.35);
+      border: 1px solid rgba(90, 74, 58, 0.3);
+      border-radius: 8px;
+      padding: 7px 10px;
+      color: #c4b5a2;
+      font-family: "Cormorant Garamond", serif;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #audio-panel .track-btn:hover {
+      background: rgba(212, 175, 55, 0.2);
+      border-color: #d4af37;
+      color: #f5efe6;
+    }
+
+    #audio-panel .track-btn.active {
+      background: rgba(212, 175, 55, 0.25);
+      border-color: #d4af37;
+      color: #d4af37;
+      font-weight: 600;
+    }
+
+    .volume-slider {
+      width: 100%;
+      accent-color: #d4af37;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    /* ===== Controls Hint ===== */
+    #controls-hint {
+      position: fixed;
+      bottom: 95px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 50;
+      color: rgba(220, 205, 185, 0.7);
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-align: center;
+      pointer-events: none;
+      text-transform: uppercase;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 7px 20px;
+      border-radius: 999px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      transition: opacity 1.5s ease;
+    }
+
+    /* ===== Book Detail Popup ===== */
+    #book-detail {
+      position: fixed;
+      bottom: 115px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      z-index: 80;
+      background: rgba(22, 18, 15, 0.96);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      border-radius: 18px;
+      padding: 24px 30px;
+      max-width: 420px;
+      width: 90%;
+      pointer-events: auto;
+      opacity: 0;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.9);
+    }
+
+    #book-detail.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    #book-detail h3 {
+      font-family: "Instrument Serif", serif;
+      font-size: 26px;
+      color: #f5efe6;
+      margin-bottom: 2px;
+    }
+
+    #book-detail .author {
+      color: #d4af37;
+      font-size: 16px;
+      font-style: italic;
+    }
+
+    #book-detail .desc {
+      color: #c4b5a2;
+      font-size: 14px;
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    #book-detail .action-btn {
+      margin-top: 14px;
+      background: rgba(212, 175, 55, 0.2);
+      border: 1px solid rgba(212, 175, 55, 0.45);
+      color: #d4af37;
+      padding: 8px 22px;
+      border-radius: 999px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-transform: uppercase;
+      display: inline-block;
+      text-decoration: none;
+    }
+
+    #book-detail .action-btn:hover {
+      background: rgba(212, 175, 55, 0.35);
+      border-color: #d4af37;
+      transform: translateY(-2px);
+    }
+
+    /* ===== Top Left User Profile ===== */
+    #user-badge {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(22, 18, 15, 0.92);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      border-radius: 999px;
+      padding: 8px 18px;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 12px;
+      color: #d4af37;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== 3D Canvas ===== -->
+  <div id="canvas-container"></div>
+
+  <!-- ===== User Profile ===== -->
+  <div id="user-badge">
+    <span>🏛️ Harsh Sir</span>
+    <span style="opacity:0.4;">|</span>
+    <a href="/auth_index.html" style="color:#a89a8a; text-decoration:none; font-size:11px;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#a89a8a'">Logout</a>
+  </div>
+
+  <!-- ===== Controls Hint ===== -->
+  <div id="controls-hint">
+    <span>WASD / Arrow Keys to Walk &bull; Drag Mouse to Look &bull; Click Books to Inspect &bull; Space to Jump</span>
+  </div>
+
+  <!-- ===== Audio Panel ===== -->
+  <div id="audio-panel">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px;">
+      <span style="color:#d4af37; font-size:11px; font-family:'JetBrains Mono',monospace; letter-spacing:0.12em;">🎵 FLAC MUSIC</span>
+      <button id="audio-toggle" style="background:none;border:none;color:#c4b5a2;cursor:pointer;font-size:16px;">🔊</button>
+    </div>
+    <div class="track-list" id="track-container">
+      <button class="track-btn active" data-src="/music/Naan%20Naan%20-%20Santhosh%20Narayanan.flac">
+        <span>Naan Naan</span>
+        <span style="font-size:11px; opacity:0.6;">Santhosh N.</span>
+      </button>
+      <button class="track-btn" data-src="/music/Buttabomma%20-%20Armaan%20Malik.flac">
+        <span>Buttabomma</span>
+        <span style="font-size:11px; opacity:0.6;">Armaan Malik</span>
+      </button>
+      <button class="track-btn" data-src="/music/Ramuloo%20Ramulaa%20-%20Anurag%20Kulkarni.flac">
+        <span>Ramuloo Ramulaa</span>
+        <span style="font-size:11px; opacity:0.6;">Anurag K.</span>
+      </button>
+    </div>
+    <div style="margin-top:10px; display:flex; align-items:center; gap:10px;">
+      <span style="color:#8a7a6a; font-size:11px;">🔊</span>
+      <input type="range" class="volume-slider" id="master-volume" min="0" max="1" step="0.01" value="0.8" />
+      <span style="color:#8a7a6a; font-size:11px; min-width:30px;" id="vol-label">80%</span>
+    </div>
+    <div style="margin-top:8px; color:#c4b5a2; font-size:11px; font-family:'JetBrains Mono',monospace; text-align:center;" id="now-playing">
+      ▶ Naan Naan
+    </div>
+  </div>
+
+  <!-- ===== Book Detail Popup ===== -->
+  <div id="book-detail">
+    <h3 id="detail-title">No Longer Human</h3>
+    <div class="author" id="detail-author">Osamu Dazai</div>
+    <div class="desc" id="detail-desc">A portrait of alienation and solitude in modern Japan.</div>
+    <a class="action-btn" id="detail-read-btn" href="#" target="_blank">📖 Open PDF</a>
+  </div>
+
+  <!-- ===== HUD ===== -->
+  <div id="hud">
+    <div id="hud-title">🏛️ Medieval Scriptorium & Library</div>
+    <div id="hud-controls">
+      <button id="hud-prev" title="Previous Book">◀</button>
+      <span id="hud-info">Vol. I of VII</span>
+      <button id="hud-next" title="Next Book">▶</button>
+      <button id="hud-center" title="Center on Avatar">🚶</button>
+      <button id="hud-toggle-audio" title="Toggle Audio Panel">🎵</button>
+    </div>
+  </div>
+
+  <!-- ===== Main Script ===== -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+    // ============================================================
+    // CONFIGURATION & BOOKS
+    // ============================================================
+    const BOOKS = [
+      {
+        id: 'no-longer-human',
+        title: 'No Longer Human',
+        author: 'Osamu Dazai',
+        desc: 'A portrait of alienation and solitude in modern Japan.',
+        color: '#181f33',
+        foil: '#a8c5db',
+        pdf: 'book/NO LONGER HUMAN - OSAMU DAZAI.pdf'
+      },
+      {
+        id: 'the-fall',
+        title: 'The Fall & The Outsider',
+        author: 'Albert Camus',
+        desc: 'Absurdity, freedom and moral isolation in two masterpieces.',
+        color: '#683b1d',
+        foil: '#df9652',
+        pdf: 'book/Camus, Albert - The Fall and The Outsider [tr. Gilbert] (Lythway, 1977).pdf'
+      },
+      {
+        id: 'early-greek',
+        title: 'Early Greek Philosophy',
+        author: 'John Burnet',
+        desc: 'The origins of cosmology and rational enquiry.',
+        color: '#1e3826',
+        foil: '#e5c468',
+        pdf: 'book/EARLY GREEK PHILOSOPHY.pdf'
+      },
+      {
+        id: 'forbidden-knowledge',
+        title: 'Forbidden Knowledge',
+        author: 'Roger Shattuck',
+        desc: 'From Prometheus to the frontiers of inquiry.',
+        color: '#421420',
+        foil: '#e8a598',
+        pdf: 'book/FORBIDDEN KNOWLEDGE - PROMETHEUS TO PORNOGRAPHY.pdf'
+      },
+      {
+        id: 'central-banking',
+        title: 'Central Banking & Enslavement',
+        author: 'Stephen M. Goodson',
+        desc: 'Monetary power, sovereignty and economic systems.',
+        color: '#162338',
+        foil: '#e0b852',
+        pdf: 'book/A HISTORY OF CENTRAL BANKING AND THE ENSLAVEMENT OF MANKIND.pdf'
+      },
+      {
+        id: 'dark-psychology',
+        title: 'Dark Psychology',
+        author: 'Behavioral Studies',
+        desc: 'Perception, emotional dynamics and influence.',
+        color: '#1e2024',
+        foil: '#dc8448',
+        pdf: 'book/Dark Psychology - How to Analyze People, and Their Emotional Intelligence To Be Able to Avoid.pdf'
+      },
+      {
+        id: 'untethered-soul',
+        title: 'The Untethered Soul',
+        author: 'Michael A. Singer',
+        desc: 'The journey beyond yourself.',
+        color: '#162842',
+        foil: '#f5d36e',
+        pdf: 'book/The Untethered Soul (Michael A. Singer Michael Alan Singer).pdf'
+      }
+    ];
+
+    // ============================================================
+    // AUDIO PLAYER
+    // ============================================================
+    const audioEl = new Audio('/music/Naan%20Naan%20-%20Santhosh%20Narayanan.flac');
+    audioEl.loop = true;
+    audioEl.volume = 0.8;
+
+    const trackButtons = document.querySelectorAll('.track-btn');
+    trackButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        trackButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        audioEl.src = btn.dataset.src;
+        audioEl.play().catch(() => {});
+        document.getElementById('now-playing').textContent = '▶ ' + btn.querySelector('span').textContent;
+      });
+    });
+
+    const audioToggle = document.getElementById('audio-toggle');
+    audioToggle.addEventListener('click', () => {
+      if (audioEl.paused) {
+        audioEl.play().catch(() => {});
+        audioToggle.textContent = '🔊';
+      } else {
+        audioEl.pause();
+        audioToggle.textContent = '🔇';
+      }
+    });
+
+    const masterVol = document.getElementById('master-volume');
+    masterVol.addEventListener('input', (e) => {
+      const v = parseFloat(e.target.value);
+      audioEl.volume = v;
+      document.getElementById('vol-label').textContent = Math.round(v * 100) + '%';
+    });
+
+    document.getElementById('hud-toggle-audio').addEventListener('click', () => {
+      document.getElementById('audio-panel').classList.toggle('hidden');
+    });
+
+    // ============================================================
+    // THREE.JS SETUP
+    // ============================================================
+    const container = document.getElementById('canvas-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0807);
+    scene.fog = new THREE.FogExp2(0x0a0807, 0.035);
+
+    const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 3, 7);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.25;
+    container.appendChild(renderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.maxPolarAngle = Math.PI / 2 - 0.02;
+    controls.minDistance = 2;
+    controls.maxDistance = 18;
+    controls.target.set(0, 1.2, 0);
+
+    // ============================================================
+    // LIGHTING & ATMOSPHERE
+    // ============================================================
+    const ambientLight = new THREE.AmbientLight(0x382c22, 0.6);
+    scene.add(ambientLight);
+
+    const mainMoonlight = new THREE.DirectionalLight(0xd4e2ff, 0.4);
+    mainMoonlight.position.set(8, 15, -6);
+    scene.add(mainMoonlight);
+
+    // Dynamic Flickering Torches
+    const torchData = [];
+    function addTorch(x, y, z) {
+      const torchGroup = new THREE.Group();
+      torchGroup.position.set(x, y, z);
+
+      // Bracket
+      const bracket = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.04, 0.03, 0.4, 8),
+        new THREE.MeshStandardMaterial({ color: 0x1f1915, metalness: 0.8, roughness: 0.6 })
+      );
+      bracket.position.set(0, -0.15, 0);
+      torchGroup.add(bracket);
+
+      // Flame core
+      const flame = new THREE.Mesh(
+        new THREE.SphereGeometry(0.08, 12, 12),
+        new THREE.MeshBasicMaterial({ color: 0xffaa33 })
+      );
+      flame.position.set(0, 0.1, 0);
+      torchGroup.add(flame);
+
+      // Light
+      const light = new THREE.PointLight(0xff8822, 2.2, 10, 2);
+      light.position.set(0, 0.2, 0);
+      light.castShadow = true;
+      light.shadow.bias = -0.001;
+      torchGroup.add(light);
+
+      scene.add(torchGroup);
+      torchData.push({ light, flame, baseIntensity: 2.2 });
+    }
+
+    addTorch(-5.5, 2.4, -4);
+    addTorch(5.5, 2.4, -4);
+    addTorch(-5.5, 2.4, 4);
+    addTorch(5.5, 2.4, 4);
+    addTorch(0, 3.2, -6.5);
+
+    // ============================================================
+    // DUST PARTICLES
+    // ============================================================
+    const dustCount = 300;
+    const dustGeo = new THREE.BufferGeometry();
+    const dustPos = new Float32Array(dustCount * 3);
+    for (let i = 0; i < dustCount; i++) {
+      dustPos[i * 3] = (Math.random() - 0.5) * 18;
+      dustPos[i * 3 + 1] = Math.random() * 6;
+      dustPos[i * 3 + 2] = (Math.random() - 0.5) * 18;
+    }
+    dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+    const dustMat = new THREE.PointsMaterial({
+      size: 0.04,
+      color: 0xe6c57a,
+      transparent: true,
+      opacity: 0.4,
+      blending: THREE.AdditiveBlending
+    });
+    const dustPoints = new THREE.Points(dustGeo, dustMat);
+    scene.add(dustPoints);
+
+    // ============================================================
+    // MEDIEVAL ARCHITECTURE BUILDER
+    // ============================================================
+    // Stone Floor
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(28, 28),
+      new THREE.MeshStandardMaterial({ color: 0x221a14, roughness: 0.9, metalness: 0.1 })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // Stone Walls
+    const wallMat = new THREE.MeshStandardMaterial({ color: 0x1c1713, roughness: 0.85 });
+    const backWall = new THREE.Mesh(new THREE.BoxGeometry(28, 9, 0.6), wallMat);
+    backWall.position.set(0, 4.5, -7.5);
+    backWall.receiveShadow = true;
+    scene.add(backWall);
+
+    // Gothic Pillars
+    const pillarMat = new THREE.MeshStandardMaterial({ color: 0x28201a, roughness: 0.8 });
+    [-6, -2, 2, 6].forEach(x => {
+      const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 8, 16), pillarMat);
+      pillar.position.set(x, 4, -4);
+      pillar.castShadow = true;
+      pillar.receiveShadow = true;
+      scene.add(pillar);
+
+      // Gothic arch rib
+      const rib = new THREE.Mesh(new THREE.TorusGeometry(1.6, 0.1, 8, 16, Math.PI), pillarMat);
+      rib.position.set(x, 7.5, -3.9);
+      scene.add(rib);
+    });
+
+    // ============================================================
+    // INTERACTIVE BOOKSHELF & 3D BOOKS
+    // ============================================================
+    const shelfMat = new THREE.MeshStandardMaterial({ color: 0x362417, roughness: 0.75 });
+    const mainShelf = new THREE.Mesh(new THREE.BoxGeometry(11, 0.15, 0.7), shelfMat);
+    mainShelf.position.set(0, 1.2, -3.5);
+    mainShelf.receiveShadow = true;
+    mainShelf.castShadow = true;
+    scene.add(mainShelf);
+
+    const interactiveBooks = [];
+    const bookGeo = new THREE.BoxGeometry(0.38, 1.8, 1.2);
+
+    BOOKS.forEach((book, idx) => {
+      const bookMat = new THREE.MeshStandardMaterial({
+        color: new THREE.Color(book.color),
+        roughness: 0.6,
+        metalness: 0.1
+      });
+
+      const bookMesh = new THREE.Mesh(bookGeo, bookMat);
+      const xPos = -4.2 + idx * 1.4;
+      bookMesh.position.set(xPos, 2.15, -3.5);
+      bookMesh.castShadow = true;
+      bookMesh.receiveShadow = true;
+      bookMesh.userData = { ...book, origY: 2.15, index: idx };
+
+      // Spine gold accent
+      const spineFoil = new THREE.Mesh(
+        new THREE.BoxGeometry(0.02, 1.7, 1.15),
+        new THREE.MeshStandardMaterial({ color: new THREE.Color(book.foil), metalness: 0.9, roughness: 0.2 })
+      );
+      spineFoil.position.set(0.19, 0, 0);
+      bookMesh.add(spineFoil);
+
+      scene.add(bookMesh);
+      interactiveBooks.push(bookMesh);
+    });
+
+    // ============================================================
+    // WALKING 3D AVATAR
+    // ============================================================
+    const avatar = new THREE.Group();
+    avatar.position.set(0, 0, 0);
+
+    // Torso / Monastic Robe
+    const robeMat = new THREE.MeshStandardMaterial({ color: 0x2a1f18, roughness: 0.9 });
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.42, 1.1, 12), robeMat);
+    torso.position.y = 0.95;
+    torso.castShadow = true;
+    avatar.add(torso);
+
+    // Cloak Hood & Head
+    const headMat = new THREE.MeshStandardMaterial({ color: 0xe0b894, roughness: 0.7 });
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), headMat);
+    head.position.y = 1.65;
+    avatar.add(head);
+
+    const hoodMat = new THREE.MeshStandardMaterial({ color: 0x221812, roughness: 0.95 });
+    const hood = new THREE.Mesh(new THREE.SphereGeometry(0.24, 16, 16), hoodMat);
+    hood.position.set(0, 1.7, -0.05);
+    avatar.add(hood);
+
+    // Left & Right Feet/Legs
+    const legMat = new THREE.MeshStandardMaterial({ color: 0x18120e, roughness: 0.8 });
+    const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.55, 8), legMat);
+    leftLeg.position.set(-0.16, 0.28, 0);
+    avatar.add(leftLeg);
+
+    const rightLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.55, 8), legMat);
+    rightLeg.position.set(0.16, 0.28, 0);
+    avatar.add(rightLeg);
+
+    // Lantern held in hand
+    const lanternGroup = new THREE.Group();
+    lanternGroup.position.set(0.42, 0.9, 0.3);
+    const lanternFrame = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.08, 0.1, 0.22, 6),
+      new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.8, roughness: 0.3 })
+    );
+    lanternGroup.add(lanternFrame);
+
+    const lanternLight = new THREE.PointLight(0xffaa44, 1.8, 6, 2);
+    lanternLight.position.y = 0;
+    lanternGroup.add(lanternLight);
+    avatar.add(lanternGroup);
+
+    scene.add(avatar);
+
+    // ============================================================
+    // AVATAR MOVEMENT & PHYSICS
+    // ============================================================
+    const keys = { w: false, a: false, s: false, d: false, space: false };
+    window.addEventListener('keydown', (e) => {
+      const k = e.key.toLowerCase();
+      if (k === 'w' || k === 'arrowup') keys.w = true;
+      if (k === 'a' || k === 'arrowleft') keys.a = true;
+      if (k === 's' || k === 'arrowdown') keys.s = true;
+      if (k === 'd' || k === 'arrowright') keys.d = true;
+      if (k === ' ') keys.space = true;
+    });
+
+    window.addEventListener('keyup', (e) => {
+      const k = e.key.toLowerCase();
+      if (k === 'w' || k === 'arrowup') keys.w = false;
+      if (k === 'a' || k === 'arrowleft') keys.a = false;
+      if (k === 's' || k === 'arrowdown') keys.s = false;
+      if (k === 'd' || k === 'arrowright') keys.d = false;
+      if (k === ' ') keys.space = false;
+    });
+
+    let vy = 0;
+    let isJumping = false;
+    let walkCycle = 0;
+
+    // ============================================================
+    // RAYCASTING & INTERACTION
+    // ============================================================
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let hoveredBook = null;
+    let selectedIndex = 0;
+
+    function selectBook(index) {
+      selectedIndex = (index + BOOKS.length) % BOOKS.length;
+      const b = BOOKS[selectedIndex];
+
+      document.getElementById('hud-info').textContent = `Vol. ${selectedIndex + 1} of ${BOOKS.length}`;
+      document.getElementById('detail-title').textContent = b.title;
+      document.getElementById('detail-author').textContent = b.author;
+      document.getElementById('detail-desc').textContent = b.desc;
+      document.getElementById('detail-read-btn').href = b.pdf;
+      document.getElementById('book-detail').classList.add('visible');
+
+      // Animate book lift
+      interactiveBooks.forEach((mesh, idx) => {
+        mesh.position.y = idx === selectedIndex ? mesh.userData.origY + 0.35 : mesh.userData.origY;
+      });
+    }
+
+    window.addEventListener('click', (e) => {
+      if (e.target.closest('#hud') || e.target.closest('#audio-panel') || e.target.closest('#book-detail') || e.target.closest('#user-badge')) {
+        return;
+      }
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(interactiveBooks);
+      if (intersects.length > 0) {
+        selectBook(intersects[0].object.userData.index);
+      } else {
+        document.getElementById('book-detail').classList.remove('visible');
+        interactiveBooks.forEach(m => m.position.y = m.userData.origY);
+      }
+    });
+
+    document.getElementById('hud-prev').addEventListener('click', () => selectBook(selectedIndex - 1));
+    document.getElementById('hud-next').addEventListener('click', () => selectBook(selectedIndex + 1));
+    document.getElementById('hud-center').addEventListener('click', () => {
+      controls.target.copy(avatar.position).add(new THREE.Vector3(0, 1.2, 0));
+      camera.position.set(avatar.position.x, avatar.position.y + 2.5, avatar.position.z + 5);
+    });
+
+    // ============================================================
+    // ANIMATION LOOP
+    // ============================================================
+    const clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      const time = clock.getElapsedTime();
+
+      // Torch flicker
+      torchData.forEach((t, i) => {
+        const flicker = Math.sin(time * 10 + i * 2) * 0.2 + Math.sin(time * 23 + i) * 0.1;
+        t.light.intensity = t.baseIntensity + flicker;
+      });
+
+      // Dust floating
+      const dPos = dustGeo.attributes.position.array;
+      for (let i = 0; i < dustCount; i++) {
+        dPos[i * 3 + 1] += Math.sin(time + i) * 0.003;
+        if (dPos[i * 3 + 1] > 6) dPos[i * 3 + 1] = 0;
+      }
+      dustGeo.attributes.position.needsUpdate = true;
+
+      // Avatar Walking Movement
+      const moveSpeed = 4.0 * delta;
+      let isMoving = false;
+      const moveDir = new THREE.Vector3();
+
+      if (keys.w) { moveDir.z -= 1; isMoving = true; }
+      if (keys.s) { moveDir.z += 1; isMoving = true; }
+      if (keys.a) { moveDir.x -= 1; isMoving = true; }
+      if (keys.d) { moveDir.x += 1; isMoving = true; }
+
+      if (isMoving) {
+        moveDir.normalize();
+        avatar.position.x += moveDir.x * moveSpeed;
+        avatar.position.z += moveDir.z * moveSpeed;
+
+        // Rotate towards movement
+        const targetRot = Math.atan2(moveDir.x, moveDir.z);
+        avatar.rotation.y = THREE.MathUtils.lerp(avatar.rotation.y, targetRot, 0.15);
+
+        // Leg walking cycle
+        walkCycle += delta * 12;
+        leftLeg.rotation.x = Math.sin(walkCycle) * 0.6;
+        rightLeg.rotation.x = -Math.sin(walkCycle) * 0.6;
+        avatar.position.y = Math.abs(Math.sin(walkCycle * 2)) * 0.05;
+      } else {
+        leftLeg.rotation.x = THREE.MathUtils.lerp(leftLeg.rotation.x, 0, 0.2);
+        rightLeg.rotation.x = THREE.MathUtils.lerp(rightLeg.rotation.x, 0, 0.2);
+      }
+
+      // Jump
+      if (keys.space && !isJumping) {
+        vy = 5.0;
+        isJumping = true;
+      }
+      if (isJumping) {
+        avatar.position.y += vy * delta;
+        vy -= 15.0 * delta;
+        if (avatar.position.y <= 0) {
+          avatar.position.y = 0;
+          vy = 0;
+          isJumping = false;
+        }
+      }
+
+      // Camera Follow Avatar
+      controls.target.lerp(new THREE.Vector3(avatar.position.x, avatar.position.y + 1.2, avatar.position.z), 0.08);
+      controls.update();
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // ============================================================
+    // RESIZE LISTENER
+    // ============================================================
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
