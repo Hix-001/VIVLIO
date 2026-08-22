@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Header } from './components/ui/Header';
 import { ShelfControls } from './components/ui/ShelfControls';
 import { BookDetails } from './components/ui/BookDetails';
@@ -8,7 +8,7 @@ import { CollectionGrid } from './components/collections/CollectionGrid';
 import { AudioControls } from './components/audio/AudioControls';
 import { PasswordModal } from './components/ui/PasswordModal';
 import { Scene } from './components/3d/Scene';
-import { useBookStore } from './store/bookStore';
+import { useBookStore, DEFAULT_BOOKS } from './store/bookStore';
 import { useUIStore } from './store/uiStore';
 import { useAudioStore } from './store/audioStore';
 
@@ -30,8 +30,13 @@ export const App: React.FC = () => {
     }
   }, [fetchBooks, initializeAudio]);
 
+  // Safely find active book (guards against books not being an array or empty)
+  const activeBook = useMemo(() => {
+    const bookList = Array.isArray(books) ? books : DEFAULT_BOOKS;
+    return bookList.find((b) => b && b.id === activeBookId) || bookList[0];
+  }, [books, activeBookId]);
+
   // Update dynamic CSS theme tokens when active book changes
-  const activeBook = books.find((b) => b.id === activeBookId);
   useEffect(() => {
     if (activeBook) {
       document.documentElement.style.setProperty('--theme-hue', activeBook.cloth_color || '#1a2238');
