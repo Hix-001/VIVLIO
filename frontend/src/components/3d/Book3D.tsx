@@ -36,89 +36,67 @@ export const Book3D: React.FC<Book3DProps> = ({
   const boardThickness = 0.04;
   const squareExtension = 0.04;
 
-  // Generate procedural cover and spine textures
-  const { frontCoverTex, spineTex, backCoverTex, pageEdgeTex } = useMemo(() => {
-    // 1. Front Cover Texture
-    const fcCanvas = document.createElement('canvas');
-    fcCanvas.width = 1024;
-    fcCanvas.height = 1536;
-    const fctx = fcCanvas.getContext('2d')!;
-    
-    fctx.fillStyle = book.cloth_color || '#1a2238';
-    fctx.fillRect(0, 0, 1024, 1536);
+  // Lightweight 256x384 canvas texture generation
+  const { frontCoverTex, spineTex } = useMemo(() => {
+    try {
+      // 1. Front Cover Texture (256x384 - Ultra Fast & GPU Friendly)
+      const fcCanvas = document.createElement('canvas');
+      fcCanvas.width = 256;
+      fcCanvas.height = 384;
+      const fctx = fcCanvas.getContext('2d');
+      
+      if (fctx) {
+        fctx.fillStyle = book.cloth_color || '#1a2238';
+        fctx.fillRect(0, 0, 256, 384);
 
-    // Subtle vignette
-    const vig = fctx.createRadialGradient(512, 768, 200, 512, 768, 800);
-    vig.addColorStop(0, 'rgba(255, 255, 255, 0.04)');
-    vig.addColorStop(1, 'rgba(0, 0, 0, 0.35)');
-    fctx.fillStyle = vig;
-    fctx.fillRect(0, 0, 1024, 1536);
+        // Gold border
+        fctx.strokeStyle = book.foil_color || '#d4af37';
+        fctx.lineWidth = 2;
+        fctx.strokeRect(20, 20, 216, 344);
 
-    // Foil Frame & Details
-    fctx.strokeStyle = book.foil_color || '#d4af37';
-    fctx.lineWidth = 3;
-    fctx.strokeRect(100, 100, 824, 1336);
-    fctx.lineWidth = 1;
-    fctx.strokeRect(116, 116, 792, 1304);
+        // Title
+        fctx.fillStyle = book.foil_color || '#d4af37';
+        fctx.font = 'bold 20px serif';
+        fctx.textAlign = 'center';
+        fctx.fillText(book.title.slice(0, 18), 128, 160);
 
-    fctx.fillStyle = book.foil_color || '#d4af37';
-    fctx.font = '500 24px "Plus Jakarta Sans", sans-serif';
-    fctx.textAlign = 'center';
-    fctx.fillText('THE COMPLETE SHELF · ARCHIVAL EDITION', 512, 220);
+        // Author
+        fctx.font = 'italic 14px serif';
+        fctx.fillStyle = '#ffffff';
+        fctx.fillText(book.author || 'Author', 128, 200);
+      }
 
-    // Central geometric motif
-    fctx.lineWidth = 2.5;
-    for (let r = 30; r <= 120; r += 30) {
-      fctx.beginPath();
-      fctx.arc(512, 650, r, 0, Math.PI * 2);
-      fctx.stroke();
+      // 2. Spine Texture (64x384)
+      const spCanvas = document.createElement('canvas');
+      spCanvas.width = 64;
+      spCanvas.height = 384;
+      const sctx = spCanvas.getContext('2d');
+      if (sctx) {
+        sctx.fillStyle = book.cloth_color || '#1a2238';
+        sctx.fillRect(0, 0, 64, 384);
+        sctx.save();
+        sctx.translate(32, 192);
+        sctx.rotate(Math.PI / 2);
+        sctx.font = 'bold 14px serif';
+        sctx.fillStyle = book.foil_color || '#d4af37';
+        sctx.textAlign = 'center';
+        sctx.fillText(book.title.slice(0, 22), 0, 5);
+        sctx.restore();
+      }
+
+      return {
+        frontCoverTex: new THREE.CanvasTexture(fcCanvas),
+        spineTex: new THREE.CanvasTexture(spCanvas),
+      };
+    } catch {
+      return {
+        frontCoverTex: null,
+        spineTex: null,
+      };
     }
-
-    fctx.font = '400 78px "Instrument Serif", "Cormorant Garamond", Georgia, serif';
-    fctx.fillText(book.title.toUpperCase(), 512, 1100);
-
-    fctx.font = 'italic 400 32px "Cormorant Garamond", Georgia, serif';
-    fctx.fillStyle = '#ffffff';
-    fctx.fillText(book.author || 'Author', 512, 1170);
-
-    // 2. Spine Texture
-    const spCanvas = document.createElement('canvas');
-    spCanvas.width = 256;
-    spCanvas.height = 1536;
-    const sctx = spCanvas.getContext('2d')!;
-    sctx.fillStyle = book.cloth_color || '#1a2238';
-    sctx.fillRect(0, 0, 256, 1536);
-
-    sctx.save();
-    sctx.translate(128, 768);
-    sctx.rotate(Math.PI / 2);
-    sctx.font = '400 44px "Instrument Serif", serif';
-    sctx.fillStyle = book.foil_color || '#d4af37';
-    sctx.textAlign = 'center';
-    sctx.fillText(book.title.toUpperCase(), 0, 14);
-    sctx.restore();
-
-    // 3. Page Edge Texture
-    const peCanvas = document.createElement('canvas');
-    peCanvas.width = 512;
-    peCanvas.height = 512;
-    const pctx = peCanvas.getContext('2d')!;
-    pctx.fillStyle = '#e8decb';
-    pctx.fillRect(0, 0, 512, 512);
-    pctx.fillStyle = 'rgba(100, 80, 60, 0.15)';
-    for (let y = 0; y < 512; y += 2) {
-      if (Math.random() > 0.3) pctx.fillRect(0, y, 512, 1);
-    }
-
-    return {
-      frontCoverTex: new THREE.CanvasTexture(fcCanvas),
-      spineTex: new THREE.CanvasTexture(spCanvas),
-      backCoverTex: new THREE.CanvasTexture(fcCanvas),
-      pageEdgeTex: new THREE.CanvasTexture(peCanvas),
-    };
   }, [book]);
 
-  useFrame((_, delta) => {
+  useFrame(() => {
     if (!groupRef.current) return;
 
     if (!isInspecting) {
@@ -172,9 +150,9 @@ export const Book3D: React.FC<Book3DProps> = ({
       <mesh castShadow receiveShadow>
         <boxGeometry args={[boardThickness, height, depth]} />
         <meshStandardMaterial
-          map={spineTex}
+          map={spineTex || undefined}
           roughness={0.4}
-          metalness={0.3}
+          metalness={0.2}
           color={book.cloth_color}
         />
       </mesh>
@@ -188,16 +166,15 @@ export const Book3D: React.FC<Book3DProps> = ({
             depth - boardThickness * 2,
           ]}
         />
-        <meshStandardMaterial map={pageEdgeTex} roughness={0.85} metalness={0.1} />
+        <meshStandardMaterial color="#f0e6d6" roughness={0.9} metalness={0.05} />
       </mesh>
 
       {/* Back Cover Board */}
       <mesh position={[width / 2, 0, -depth / 2 + boardThickness / 2]} castShadow receiveShadow>
         <boxGeometry args={[width, height, boardThickness]} />
         <meshStandardMaterial
-          map={backCoverTex}
           roughness={0.35}
-          metalness={0.3}
+          metalness={0.2}
           color={book.cloth_color}
         />
       </mesh>
@@ -207,9 +184,9 @@ export const Book3D: React.FC<Book3DProps> = ({
         <mesh position={[width / 2, 0, 0]} castShadow receiveShadow>
           <boxGeometry args={[width, height, boardThickness]} />
           <meshStandardMaterial
-            map={frontCoverTex}
+            map={frontCoverTex || undefined}
             roughness={0.35}
-            metalness={0.3}
+            metalness={0.2}
             color={book.cloth_color}
           />
         </mesh>
