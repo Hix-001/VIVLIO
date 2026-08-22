@@ -1,16 +1,20 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useBookStore } from '../../store/bookStore';
+import { useBookStore, DEFAULT_BOOKS } from '../../store/bookStore';
 import { useUIStore } from '../../store/uiStore';
 
 export const ShelfControls: React.FC = () => {
   const { books, activeBookId, shelfIndex, setShelfIndex, setActiveBookId } = useBookStore();
   const { viewMode, setViewMode } = useUIStore();
 
-  if (viewMode !== 'shelf' || books.length === 0) return null;
+  const bookList = useMemo(() => {
+    return Array.isArray(books) && books.length > 0 ? books : DEFAULT_BOOKS;
+  }, [books]);
 
-  const normalizedIdx = ((shelfIndex % books.length) + books.length) % books.length;
-  const activeBook = books[normalizedIdx] || books[0];
+  if (viewMode !== 'shelf' || bookList.length === 0) return null;
+
+  const normalizedIdx = ((shelfIndex % bookList.length) + bookList.length) % bookList.length;
+  const activeBook = bookList[normalizedIdx] || bookList[0];
 
   return (
     <footer className="absolute bottom-8 left-0 right-0 z-20 flex flex-col items-center gap-4 pointer-events-none">
@@ -20,7 +24,7 @@ export const ShelfControls: React.FC = () => {
         className="text-center max-w-xl pointer-events-auto cursor-pointer p-3 rounded-2xl hover:bg-white/[0.04] transition-all group"
       >
         <div className="font-mono text-[11px] tracking-widest uppercase text-gold mb-1">
-          Volume {normalizedIdx + 1} of {books.length}
+          Volume {normalizedIdx + 1} of {bookList.length}
         </div>
         <h2 className="font-serifDisplay text-3xl tracking-wide text-[#f5efe6] leading-none mb-1 group-hover:text-gold transition-colors">
           {activeBook.title}
@@ -41,7 +45,7 @@ export const ShelfControls: React.FC = () => {
         </button>
 
         <div className="flex items-center gap-2">
-          {books.map((b, idx) => (
+          {bookList.map((b, idx) => (
             <button
               key={b.id}
               onClick={() => {

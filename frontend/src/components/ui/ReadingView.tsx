@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Loader2, Bookmark } from 'lucide-react';
-import { useBookStore } from '../../store/bookStore';
+import { useBookStore, DEFAULT_BOOKS } from '../../store/bookStore';
 import { useUIStore } from '../../store/uiStore';
 import { pdfRenderer } from '../../lib/pdf-renderer';
 
@@ -8,7 +8,11 @@ export const ReadingView: React.FC = () => {
   const { books, activeBookId, updateReadingProgress } = useBookStore();
   const { viewMode, setViewMode } = useUIStore();
 
-  const activeBook = books.find((b) => b.id === activeBookId);
+  const bookList = useMemo(() => {
+    return Array.isArray(books) && books.length > 0 ? books : DEFAULT_BOOKS;
+  }, [books]);
+
+  const activeBook = bookList.find((b) => b && b.id === activeBookId) || bookList[0];
 
   const [currentSpread, setCurrentSpread] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -25,7 +29,8 @@ export const ReadingView: React.FC = () => {
     let isMounted = true;
     setIsLoading(true);
 
-    pdfRenderer.getSpread(activeBook.pdf_url, currentSpread).then((spreadData) => {
+    const pdfUrl = activeBook.pdf_url || activeBook.file_path;
+    pdfRenderer.getSpread(pdfUrl, currentSpread).then((spreadData) => {
       if (!isMounted) return;
       setTotalPages(spreadData.totalPages);
       setTotalSpreads(spreadData.totalSpreads);
@@ -53,6 +58,8 @@ export const ReadingView: React.FC = () => {
         last_spread: currentSpread,
         total_pages: spreadData.totalPages,
       });
+    }).catch(() => {
+      if (isMounted) setIsLoading(false);
     });
 
     return () => {

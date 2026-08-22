@@ -9,6 +9,7 @@ export const DEFAULT_BOOKS: Book[] = [
     author: 'Osamu Dazai',
     description: 'A portrait of alienation and solitude in modern Japan.',
     file_path: '/book/NO LONGER HUMAN - OSAMU DAZAI.pdf',
+    pdf_url: '/book/NO LONGER HUMAN - OSAMU DAZAI.pdf',
     total_pages: 176,
     cloth_color: '#181f33',
     foil_color: '#a8c5db',
@@ -21,6 +22,7 @@ export const DEFAULT_BOOKS: Book[] = [
     author: 'Albert Camus',
     description: 'Absurdity, freedom and moral isolation in two masterpieces.',
     file_path: '/book/Camus, Albert - The Fall and The Outsider [tr. Gilbert] (Lythway, 1977).pdf',
+    pdf_url: '/book/Camus, Albert - The Fall and The Outsider [tr. Gilbert] (Lythway, 1977).pdf',
     total_pages: 224,
     cloth_color: '#683b1d',
     foil_color: '#df9652',
@@ -33,6 +35,7 @@ export const DEFAULT_BOOKS: Book[] = [
     author: 'John Burnet',
     description: 'The origins of cosmology and rational enquiry in the pre-Socratic era.',
     file_path: '/book/EARLY GREEK PHILOSOPHY.pdf',
+    pdf_url: '/book/EARLY GREEK PHILOSOPHY.pdf',
     total_pages: 412,
     cloth_color: '#1e3826',
     foil_color: '#e5c468',
@@ -45,6 +48,7 @@ export const DEFAULT_BOOKS: Book[] = [
     author: 'Behavioral Studies',
     description: 'Perception, emotional dynamics and influence tactics to be aware of.',
     file_path: '/book/Dark Psychology - How to Analyze People, and Their Emotional Intelligence To Be Able to Avoid.pdf',
+    pdf_url: '/book/Dark Psychology - How to Analyze People, and Their Emotional Intelligence To Be Able to Avoid.pdf',
     total_pages: 148,
     cloth_color: '#1e2024',
     foil_color: '#dc8448',
@@ -57,6 +61,7 @@ export const DEFAULT_BOOKS: Book[] = [
     author: 'Michael A. Singer',
     description: 'The journey beyond yourself and exploring inner consciousness.',
     file_path: '/book/The Untethered Soul (Michael A. Singer Michael Alan Singer).pdf',
+    pdf_url: '/book/The Untethered Soul (Michael A. Singer Michael Alan Singer).pdf',
     total_pages: 200,
     cloth_color: '#162842',
     foil_color: '#f5d36e',
@@ -84,7 +89,7 @@ interface BookStore {
 
 export const useBookStore = create<BookStore>((set, get) => ({
   books: DEFAULT_BOOKS,
-  activeBookId: DEFAULT_BOOKS[0]?.id || null,
+  activeBookId: DEFAULT_BOOKS[0]?.id || 'vol-no-longer-human',
   shelfIndex: 0,
   isLoading: false,
   searchQuery: '',
@@ -94,7 +99,7 @@ export const useBookStore = create<BookStore>((set, get) => ({
     set({ isLoading: true });
     try {
       const serverBooks = await BookAPI.getBooks({ search });
-      if (serverBooks && serverBooks.length > 0) {
+      if (Array.isArray(serverBooks) && serverBooks.length > 0) {
         set({ books: serverBooks, isLoading: false });
         if (!get().activeBookId) {
           set({ activeBookId: serverBooks[0].id });
@@ -102,8 +107,8 @@ export const useBookStore = create<BookStore>((set, get) => ({
       } else {
         set({ books: DEFAULT_BOOKS, isLoading: false });
       }
-    } catch (e) {
-      console.warn('Backend API unavailable, using bundled default 3D shelf collection:', e);
+    } catch {
+      // Backend unavailable on static deployment (e.g. Vercel)
       set({ books: DEFAULT_BOOKS, isLoading: false });
     }
   },
@@ -113,11 +118,11 @@ export const useBookStore = create<BookStore>((set, get) => ({
   },
 
   setShelfIndex: (index: number) => {
-    const total = get().books.length;
-    if (total === 0) return;
+    const list = Array.isArray(get().books) && get().books.length > 0 ? get().books : DEFAULT_BOOKS;
+    const total = list.length;
     const normalized = ((index % total) + total) % total;
     set({ shelfIndex: index });
-    const active = get().books[normalized];
+    const active = list[normalized];
     if (active) {
       set({ activeBookId: active.id });
     }
@@ -125,7 +130,16 @@ export const useBookStore = create<BookStore>((set, get) => ({
 
   setSearchQuery: (query: string) => {
     set({ searchQuery: query });
-    get().fetchBooks(query);
+    if (!query) {
+      set({ books: DEFAULT_BOOKS });
+      return;
+    }
+    const filtered = DEFAULT_BOOKS.filter(
+      (b) =>
+        b.title.toLowerCase().includes(query.toLowerCase()) ||
+        b.author.toLowerCase().includes(query.toLowerCase())
+    );
+    set({ books: filtered.length > 0 ? filtered : DEFAULT_BOOKS });
   },
 
   updateReadingProgress: async (bookId: string, progress: Partial<ReadingProgress>) => {
@@ -137,8 +151,8 @@ export const useBookStore = create<BookStore>((set, get) => ({
           [bookId]: updated,
         },
       }));
-    } catch (e) {
-      console.warn('Could not sync reading progress with server:', e);
+    } catch {
+      // Offline fallback
     }
   },
 
@@ -159,8 +173,11 @@ export const useBookStore = create<BookStore>((set, get) => ({
     try {
       await BookAPI.deleteBook(bookId);
       await get().fetchBooks();
-    } catch (e) {
-      console.warn('Delete failed:', e);
+    } catch {
+      // Local filter fallback
+      set((state) => ({
+        books: state.books.filter((b) => b.id !== bookId),
+      }));
     }
   },
 }));
