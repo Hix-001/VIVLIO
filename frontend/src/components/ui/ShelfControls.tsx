@@ -44,26 +44,39 @@ export const ShelfControls: React.FC = () => {
           <ChevronLeft size={18} />
         </button>
 
-        <div className="flex items-center gap-2">
-          {bookList.map((b, idx) => (
-            <button
-              key={b.id}
-              onClick={() => {
-                setShelfIndex(idx);
-                setActiveBookId(b.id);
-              }}
-              className="p-1 group focus:outline-none"
-              aria-label={`Go to ${b.title}`}
-            >
-              <div
-                className={`h-1.5 transition-all duration-300 rounded-full ${
-                  idx === normalizedIdx
-                    ? 'w-5 bg-gold shadow-[0_0_8px_rgba(212,175,55,0.8)]'
-                    : 'w-1.5 bg-white/20 group-hover:bg-white/50'
-                }`}
-              />
-            </button>
-          ))}
+        {/* Sliding Window Indicators for 101 Books */}
+        <div className="flex items-center gap-1.5 px-2">
+          <span className="font-mono text-xs text-gold font-bold mr-1.5">
+            {normalizedIdx + 1}
+          </span>
+          <span className="font-mono text-xs text-[#8e7f6e] mr-2">
+            / {bookList.length}
+          </span>
+
+          {/* Contextual mini-dots around active book */}
+          {[-3, -2, -1, 0, 1, 2, 3].map((offset) => {
+            const targetIdx = ((normalizedIdx + offset) % bookList.length + bookList.length) % bookList.length;
+            const isCurr = offset === 0;
+            return (
+              <button
+                key={offset}
+                onClick={() => {
+                  setShelfIndex(targetIdx);
+                  setActiveBookId(bookList[targetIdx].id);
+                }}
+                className="p-0.5 group focus:outline-none"
+                aria-label={`Jump to volume ${targetIdx + 1}`}
+              >
+                <div
+                  className={`h-1.5 transition-all duration-300 rounded-full ${
+                    isCurr
+                      ? 'w-4 bg-gold shadow-[0_0_8px_rgba(212,175,55,0.8)]'
+                      : 'w-1.5 bg-white/20 group-hover:bg-white/50'
+                  }`}
+                />
+              </button>
+            );
+          })}
         </div>
 
         <button

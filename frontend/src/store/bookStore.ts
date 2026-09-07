@@ -1,74 +1,9 @@
 import { create } from 'zustand';
 import { Book, ReadingProgress } from '../types';
 import { BookAPI, ReadingAPI } from '../lib/api';
+import { CURATED_101_BOOKS } from '../data/curated101Books';
 
-export const DEFAULT_BOOKS: Book[] = [
-  {
-    id: 'vol-no-longer-human',
-    title: 'No Longer Human',
-    author: 'Osamu Dazai',
-    description: 'A portrait of alienation and solitude in modern Japan.',
-    file_path: '/book/NO LONGER HUMAN - OSAMU DAZAI.pdf',
-    pdf_url: '/book/NO LONGER HUMAN - OSAMU DAZAI.pdf',
-    total_pages: 176,
-    cloth_color: '#181f33',
-    foil_color: '#a8c5db',
-    theme_glow: 'rgba(168, 197, 219, 0.25)',
-    dimensions: { width: 1.5, height: 2.2, depth: 0.4 }
-  },
-  {
-    id: 'vol-the-fall',
-    title: 'The Fall & The Outsider',
-    author: 'Albert Camus',
-    description: 'Absurdity, freedom and moral isolation in two masterpieces.',
-    file_path: '/book/Camus, Albert - The Fall and The Outsider [tr. Gilbert] (Lythway, 1977).pdf',
-    pdf_url: '/book/Camus, Albert - The Fall and The Outsider [tr. Gilbert] (Lythway, 1977).pdf',
-    total_pages: 224,
-    cloth_color: '#683b1d',
-    foil_color: '#df9652',
-    theme_glow: 'rgba(223, 150, 82, 0.25)',
-    dimensions: { width: 1.5, height: 2.2, depth: 0.45 }
-  },
-  {
-    id: 'vol-early-greek',
-    title: 'Early Greek Philosophy',
-    author: 'John Burnet',
-    description: 'The origins of cosmology and rational enquiry in the pre-Socratic era.',
-    file_path: '/book/EARLY GREEK PHILOSOPHY.pdf',
-    pdf_url: '/book/EARLY GREEK PHILOSOPHY.pdf',
-    total_pages: 412,
-    cloth_color: '#1e3826',
-    foil_color: '#e5c468',
-    theme_glow: 'rgba(229, 196, 104, 0.25)',
-    dimensions: { width: 1.5, height: 2.2, depth: 0.55 }
-  },
-  {
-    id: 'vol-dark-psychology',
-    title: 'Dark Psychology',
-    author: 'Behavioral Studies',
-    description: 'Perception, emotional dynamics and influence tactics to be aware of.',
-    file_path: '/book/Dark Psychology - How to Analyze People, and Their Emotional Intelligence To Be Able to Avoid.pdf',
-    pdf_url: '/book/Dark Psychology - How to Analyze People, and Their Emotional Intelligence To Be Able to Avoid.pdf',
-    total_pages: 148,
-    cloth_color: '#1e2024',
-    foil_color: '#dc8448',
-    theme_glow: 'rgba(220, 132, 72, 0.25)',
-    dimensions: { width: 1.5, height: 2.2, depth: 0.38 }
-  },
-  {
-    id: 'vol-untethered-soul',
-    title: 'The Untethered Soul',
-    author: 'Michael A. Singer',
-    description: 'The journey beyond yourself and exploring inner consciousness.',
-    file_path: '/book/The Untethered Soul (Michael A. Singer Michael Alan Singer).pdf',
-    pdf_url: '/book/The Untethered Soul (Michael A. Singer Michael Alan Singer).pdf',
-    total_pages: 200,
-    cloth_color: '#162842',
-    foil_color: '#f5d36e',
-    theme_glow: 'rgba(245, 211, 110, 0.25)',
-    dimensions: { width: 1.5, height: 2.2, depth: 0.42 }
-  }
-];
+export const DEFAULT_BOOKS: Book[] = CURATED_101_BOOKS;
 
 interface BookStore {
   books: Book[];
@@ -76,12 +11,14 @@ interface BookStore {
   shelfIndex: number;
   isLoading: boolean;
   searchQuery: string;
+  selectedCategory: string;
   readingProgress: Record<string, ReadingProgress>;
 
   fetchBooks: (search?: string) => Promise<void>;
   setActiveBookId: (id: string | null) => void;
   setShelfIndex: (index: number) => void;
   setSearchQuery: (query: string) => void;
+  setSelectedCategory: (category: string) => void;
   updateReadingProgress: (bookId: string, progress: Partial<ReadingProgress>) => Promise<void>;
   uploadNewBook: (formData: FormData) => Promise<Book>;
   deleteBook: (bookId: string) => Promise<void>;
@@ -89,10 +26,11 @@ interface BookStore {
 
 export const useBookStore = create<BookStore>((set, get) => ({
   books: DEFAULT_BOOKS,
-  activeBookId: DEFAULT_BOOKS[0]?.id || 'vol-no-longer-human',
+  activeBookId: DEFAULT_BOOKS[0]?.id || 'vol-meditations',
   shelfIndex: 0,
   isLoading: false,
   searchQuery: '',
+  selectedCategory: 'All',
   readingProgress: {},
 
   fetchBooks: async (search?: string) => {
@@ -130,16 +68,40 @@ export const useBookStore = create<BookStore>((set, get) => ({
 
   setSearchQuery: (query: string) => {
     set({ searchQuery: query });
-    if (!query) {
-      set({ books: DEFAULT_BOOKS });
-      return;
+    const cat = get().selectedCategory;
+    let filtered = DEFAULT_BOOKS;
+    if (cat && cat !== 'All') {
+      filtered = filtered.filter((b) => b.category === cat);
     }
-    const filtered = DEFAULT_BOOKS.filter(
-      (b) =>
-        b.title.toLowerCase().includes(query.toLowerCase()) ||
-        b.author.toLowerCase().includes(query.toLowerCase())
-    );
-    set({ books: filtered.length > 0 ? filtered : DEFAULT_BOOKS });
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      filtered = filtered.filter(
+        (b) =>
+          b.title.toLowerCase().includes(q) ||
+          b.author.toLowerCase().includes(q) ||
+          (b.category && b.category.toLowerCase().includes(q))
+      );
+    }
+    set({ books: filtered });
+  },
+
+  setSelectedCategory: (category: string) => {
+    set({ selectedCategory: category });
+    const query = get().searchQuery;
+    let filtered = DEFAULT_BOOKS;
+    if (category && category !== 'All') {
+      filtered = filtered.filter((b) => b.category === category);
+    }
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      filtered = filtered.filter(
+        (b) =>
+          b.title.toLowerCase().includes(q) ||
+          b.author.toLowerCase().includes(q) ||
+          (b.category && b.category.toLowerCase().includes(q))
+      );
+    }
+    set({ books: filtered });
   },
 
   updateReadingProgress: async (bookId: string, progress: Partial<ReadingProgress>) => {

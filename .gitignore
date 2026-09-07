@@ -72,3 +72,8 @@ backend/uploads/
 .turbo/
 .cache/
 .pytest_cache/
+
+# Large local media
+music/
+book/
+generate_101.py

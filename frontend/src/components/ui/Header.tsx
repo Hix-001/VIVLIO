@@ -17,10 +17,10 @@ export const Header: React.FC = () => {
       {/* Brand */}
       <div className="flex flex-col pointer-events-auto cursor-pointer" onClick={() => setViewMode('shelf')}>
         <h1 className="font-serifDisplay text-2xl tracking-widest uppercase text-[#f5efe6] font-normal">
-          The Complete Shelf
+          The 101 Archive
         </h1>
         <span className="font-mono text-[10px] tracking-widest text-[#8e7f6e] uppercase">
-          Personal 3D Library &middot; {books.length} Volumes
+          Curated Masterpieces &middot; {books.length} Volumes
         </span>
       </div>
 

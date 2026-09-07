@@ -1,6 +1,7 @@
 import React from 'react';
 import { Torch } from './Torch';
 import { DustParticles } from './DustParticles';
+import { InstancedBookshelf } from './InstancedBookshelf';
 
 export const MedievalLibrary: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
   return (
@@ -10,6 +11,9 @@ export const MedievalLibrary: React.FC<{ children?: React.ReactNode }> = ({ chil
         <planeGeometry args={[26, 12]} />
         <meshStandardMaterial color="#1a1512" roughness={0.92} metalness={0.05} />
       </mesh>
+
+      {/* Grand Archival Bookshelf with 1,000+ Instanced Books */}
+      <InstancedBookshelf />
 
       {/* Medieval Stone Pillars */}
       {[-7, -3.5, 3.5, 7].map((x, i) => (

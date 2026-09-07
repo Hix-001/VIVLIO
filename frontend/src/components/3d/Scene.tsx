@@ -49,35 +49,48 @@ export const Scene: React.FC = () => {
             {/* Medieval Gothic Architecture & Environment */}
             <MedievalLibrary>
               <Shelf>
-                {bookList.map((book, idx) => {
-                  const isSelected = activeBookId === book.id;
-                  return (
-                    <Book3D
-                      key={book.id}
-                      book={book}
-                      index={idx}
-                      carouselOffset={shelfIndex}
-                      totalBooks={bookList.length}
-                      isSelected={isSelected}
-                      isInspecting={isInspecting}
-                      isCoverOpen={isCoverOpen}
-                      onSelect={() => {
-                        playEffect('select');
-                        if (isSelected && viewMode === 'shelf') {
-                          setViewMode('inspect');
-                          playEffect('book_open');
-                        } else {
-                          setShelfIndex(idx);
-                          setActiveBookId(book.id);
-                        }
-                      }}
-                      onOpenCover={() => {
-                        playEffect(isCoverOpen ? 'book_close' : 'book_open');
-                        setCoverOpen(!isCoverOpen);
-                      }}
-                    />
-                  );
-                })}
+                {(() => {
+                  const total = bookList.length;
+                  const normalized = ((shelfIndex % total) + total) % total;
+                  const windowRadius = 6;
+                  const visibleIndices: number[] = [];
+                  for (let offset = -windowRadius; offset <= windowRadius; offset++) {
+                    const idx = ((normalized + offset) % total + total) % total;
+                    visibleIndices.push(idx);
+                  }
+
+                  return visibleIndices.map((idx) => {
+                    const book = bookList[idx];
+                    if (!book) return null;
+                    const isSelected = activeBookId === book.id;
+                    return (
+                      <Book3D
+                        key={`${book.id}-${idx}`}
+                        book={book}
+                        index={idx}
+                        carouselOffset={shelfIndex}
+                        totalBooks={bookList.length}
+                        isSelected={isSelected}
+                        isInspecting={isInspecting}
+                        isCoverOpen={isCoverOpen}
+                        onSelect={() => {
+                          playEffect('select');
+                          if (isSelected && viewMode === 'shelf') {
+                            setViewMode('inspect');
+                            playEffect('book_open');
+                          } else {
+                            setShelfIndex(idx);
+                            setActiveBookId(book.id);
+                          }
+                        }}
+                        onOpenCover={() => {
+                          playEffect(isCoverOpen ? 'book_close' : 'book_open');
+                          setCoverOpen(!isCoverOpen);
+                        }}
+                      />
+                    );
+                  });
+                })()}
               </Shelf>
             </MedievalLibrary>
           </Suspense>

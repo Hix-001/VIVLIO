@@ -6,15 +6,18 @@ export interface BookDimensions {
 
 export interface Book {
   id: string;
-  user_id: string;
+  user_id?: string;
   title: string;
   author: string;
   subtitle?: string;
   description?: string;
   year?: string;
+  category?: string;
   pdf_url: string;
+  file_path?: string;
   cover_url?: string;
-  pages: number;
+  pages?: number;
+  total_pages?: number;
   cloth_color: string;
   cloth_roughness?: string;
   cloth_metalness?: string;

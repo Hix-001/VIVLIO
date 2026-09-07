@@ -1,11 +1,12 @@
-import React, { useMemo } from 'react';
-import { ArrowLeft, BookOpen, Trash2, Calendar, FileText, User as UserIcon } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { ArrowLeft, BookOpen, Download, Trash2, Calendar, FileText, Bookmark, Sparkles } from 'lucide-react';
 import { useBookStore, DEFAULT_BOOKS } from '../../store/bookStore';
 import { useUIStore } from '../../store/uiStore';
 
 export const BookDetails: React.FC = () => {
   const { books, activeBookId, deleteBook } = useBookStore();
-  const { viewMode, setViewMode, isCoverOpen, setCoverOpen } = useUIStore();
+  const { viewMode, setViewMode, setCoverOpen } = useUIStore();
+  const [imgError, setImgError] = useState(false);
 
   const isInspecting = viewMode === 'inspect';
 
@@ -14,6 +15,20 @@ export const BookDetails: React.FC = () => {
   }, [books]);
 
   const activeBook = bookList.find((b) => b && b.id === activeBookId) || bookList[0];
+
+  const handleDownload = () => {
+    if (!activeBook) return;
+    const pdfPath = activeBook.pdf_url || activeBook.file_path;
+    if (pdfPath) {
+      const link = document.createElement('a');
+      link.href = pdfPath;
+      link.download = `${activeBook.title} - ${activeBook.author}.pdf`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
 
   if (!activeBook) return null;
 
@@ -47,33 +62,69 @@ export const BookDetails: React.FC = () => {
 
       {/* Book Metadata Content */}
       <div className="flex-1 overflow-y-auto p-8 space-y-6">
-        <div>
-          <span className="font-mono text-xs text-gold uppercase tracking-widest block mb-2">
-            Archival Clothbound Edition
-          </span>
-          <h2 className="font-serifDisplay text-4xl text-[#f5efe6] leading-tight mb-2">
-            {activeBook.title}
-          </h2>
-          <div className="font-serifBody italic text-xl text-[#c4b5a2]">
-            {activeBook.author}
+        {/* Cover Preview & Title */}
+        <div className="flex gap-5 items-start">
+          {activeBook.cover_url && !imgError ? (
+            <div className="w-28 aspect-[2/3] rounded-lg overflow-hidden shadow-2xl border border-[#e6d7c3]/20 flex-shrink-0 bg-black/40">
+              <img
+                src={activeBook.cover_url}
+                alt={activeBook.title}
+                onError={() => setImgError(true)}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <div
+              className="w-28 aspect-[2/3] rounded-lg shadow-2xl border border-white/20 p-2 flex flex-col justify-between flex-shrink-0"
+              style={{ backgroundColor: activeBook.cloth_color }}
+            >
+              <span className="text-[8px] font-mono uppercase" style={{ color: activeBook.foil_color }}>
+                {activeBook.year || '2026'}
+              </span>
+              <span className="text-[11px] font-serifDisplay leading-tight" style={{ color: activeBook.foil_color }}>
+                {activeBook.title}
+              </span>
+            </div>
+          )}
+
+          <div className="flex-1">
+            <span className="font-mono text-[10px] text-gold uppercase tracking-widest block mb-1">
+              {activeBook.category || 'Masterpiece Edition'} &middot; {activeBook.year}
+            </span>
+            <h2 className="font-serifDisplay text-2xl text-[#f5efe6] leading-tight mb-1">
+              {activeBook.title}
+            </h2>
+            <div className="font-serifBody italic text-base text-[#c4b5a2]">
+              {activeBook.author}
+            </div>
           </div>
         </div>
 
-        {/* Action Button: Read Spread */}
-        <button
-          onClick={() => setViewMode('reader')}
-          className="w-full py-4 rounded-xl bg-gold hover:bg-[#e5c26b] text-[#100f0d] font-bold flex items-center justify-center gap-3 transition-all transform hover:-translate-y-0.5 shadow-xl shadow-gold/20 tracking-wider uppercase text-xs font-mono"
-        >
-          <BookOpen size={16} strokeWidth={2.5} />
-          <span>Open Two-Page Spread</span>
-        </button>
+        {/* Action Buttons: Read Spread & Download */}
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            onClick={() => setViewMode('reader')}
+            className="py-3.5 px-4 rounded-xl bg-gold hover:bg-[#e5c26b] text-[#100f0d] font-bold flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5 shadow-xl shadow-gold/20 tracking-wider uppercase text-xs font-mono"
+          >
+            <BookOpen size={15} strokeWidth={2.5} />
+            <span>Open Reader</span>
+          </button>
+
+          <button
+            onClick={handleDownload}
+            className="py-3.5 px-4 rounded-xl bg-white/10 hover:bg-white/15 border border-[#e6d7c3]/20 text-[#f5efe6] font-bold flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5 shadow-lg tracking-wider uppercase text-xs font-mono"
+          >
+            <Download size={15} strokeWidth={2.5} />
+            <span>Download PDF</span>
+          </button>
+        </div>
 
         {/* Synopsis */}
         <div className="border-t border-[#e6d7c3]/10 pt-6">
           <h3 className="font-mono text-xs text-[#8e7f6e] uppercase tracking-wider mb-3">
             Synopsis & Notes
           </h3>
-          <p className="font-serifBody text-[#c4b5a2] leading-relaxed text-base">
+          <p className="font-serifBody text-[#c4b5a2] leading-relaxed text-sm">
             {activeBook.description || 'No description available for this volume.'}
           </p>
         </div>
@@ -86,33 +137,39 @@ export const BookDetails: React.FC = () => {
             <span className="text-[#8e7f6e] flex items-center gap-2">
               <FileText size={13} /> Pages
             </span>
-            <span className="text-[#f5efe6]">{activeBook.total_pages || 'N/A'}</span>
+            <span className="text-[#f5efe6]">{activeBook.total_pages || activeBook.pages || 'N/A'}</span>
           </div>
 
           <div className="flex justify-between py-1 border-b border-white/5">
             <span className="text-[#8e7f6e] flex items-center gap-2">
-              <UserIcon size={13} /> Cloth Color
+              <Bookmark size={13} /> Category
+            </span>
+            <span className="text-[#f5efe6]">{activeBook.category || 'Classics'}</span>
+          </div>
+
+          <div className="flex justify-between py-1 border-b border-white/5">
+            <span className="text-[#8e7f6e] flex items-center gap-2">
+              <Sparkles size={13} /> Binding & Foil
             </span>
             <div className="flex items-center gap-2">
               <span
                 className="w-3 h-3 rounded-full border border-white/20"
                 style={{ backgroundColor: activeBook.cloth_color }}
+                title="Cloth Hue"
               />
-              <span className="text-[#f5efe6]">{activeBook.cloth_color}</span>
+              <span
+                className="w-3 h-3 rounded-full border border-white/20"
+                style={{ backgroundColor: activeBook.foil_color }}
+                title="Foil Accent"
+              />
             </div>
           </div>
 
           <div className="flex justify-between py-1 border-b border-white/5">
             <span className="text-[#8e7f6e] flex items-center gap-2">
-              <Calendar size={13} /> Foil Accent
+              <Calendar size={13} /> Original Year
             </span>
-            <div className="flex items-center gap-2">
-              <span
-                className="w-3 h-3 rounded-full border border-white/20"
-                style={{ backgroundColor: activeBook.foil_color }}
-              />
-              <span className="text-[#f5efe6]">{activeBook.foil_color}</span>
-            </div>
+            <span className="text-[#f5efe6]">{activeBook.year || 'Historic'}</span>
           </div>
         </div>
       </div>

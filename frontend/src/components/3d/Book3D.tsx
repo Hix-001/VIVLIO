@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useState } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { Book } from '../../types';
@@ -29,6 +29,26 @@ export const Book3D: React.FC<Book3DProps> = ({
   const groupRef = useRef<THREE.Group>(null);
   const frontHingeRef = useRef<THREE.Group>(null);
   const [isHovered, setIsHovered] = useState(false);
+  const [realCoverTex, setRealCoverTex] = useState<THREE.Texture | null>(null);
+
+  // Load real cover art image if available
+  useEffect(() => {
+    if (book.cover_url) {
+      const loader = new THREE.TextureLoader();
+      loader.crossOrigin = 'anonymous';
+      loader.load(
+        book.cover_url,
+        (tex) => {
+          tex.colorSpace = THREE.SRGBColorSpace;
+          setRealCoverTex(tex);
+        },
+        undefined,
+        () => setRealCoverTex(null)
+      );
+    } else {
+      setRealCoverTex(null);
+    }
+  }, [book.cover_url]);
 
   const width = book.dimensions?.width || 1.5;
   const height = book.dimensions?.height || 2.2;
@@ -184,10 +204,10 @@ export const Book3D: React.FC<Book3DProps> = ({
         <mesh position={[width / 2, 0, 0]} castShadow receiveShadow>
           <boxGeometry args={[width, height, boardThickness]} />
           <meshStandardMaterial
-            map={frontCoverTex || undefined}
-            roughness={0.35}
-            metalness={0.2}
-            color={book.cloth_color}
+            map={realCoverTex || frontCoverTex || undefined}
+            roughness={0.4}
+            metalness={realCoverTex ? 0.05 : 0.2}
+            color={realCoverTex ? '#ffffff' : book.cloth_color}
           />
         </mesh>
       </group>
