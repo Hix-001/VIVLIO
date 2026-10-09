@@ -380,7 +380,7 @@ export const App: React.FC = () => {
       <nav className="navbar">
         <div className="nav-brand" onClick={() => setSelectedCategory('All')}>
           <div className="nav-mark" />
-          <div className="nav-brand-text">Foliom</div>
+          <div className="nav-brand-text">Vivlio</div>
         </div>
 
         <div className="nav-links">
@@ -407,7 +407,7 @@ export const App: React.FC = () => {
       </nav>
 
       {/* Hero Massive Title */}
-      <h1 className="hero-title">Foliom</h1>
+      <h1 className="hero-title">Vivlio</h1>
 
       {/* Category Filter Pills */}
       <div className="hero-categories">
