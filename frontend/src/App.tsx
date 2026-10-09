@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { X, BookOpen, Download, Bookmark, Calendar, ArrowRight } from 'lucide-react';
+import { X, BookOpen, Download, Bookmark, ArrowRight, Sparkles } from 'lucide-react';
 
 interface BookItem {
   id: string;
@@ -8,6 +8,8 @@ interface BookItem {
   category: string;
   cover: string;
   coverImage?: string;
+  pdfUrl?: string;
+  isPersonal?: boolean;
   pageCount: number;
   description: string;
   year: string;
@@ -18,8 +20,102 @@ const PAGE_INSET = 8;
 const SKEW = '30deg';
 
 const ALL_BOOKS: BookItem[] = [
+  // --- USER'S 7 PERSONAL BOOKS FROM /books ---
   {
-    id: '1',
+    id: 'p-1',
+    title: 'No Longer\nHuman',
+    author: 'Osamu Dazai',
+    category: 'Classic',
+    isPersonal: true,
+    cover: 'linear-gradient(150deg, #181f33 0%, #2a3550 100%)',
+    coverImage: 'https://covers.openlibrary.org/b/isbn/9780811204811-L.jpg',
+    pdfUrl: '/books/NO LONGER HUMAN - OSAMU DAZAI.pdf',
+    pageCount: 22,
+    description: 'A haunting, deeply introspective portrait of alienation and mask-wearing in post-war Japan.',
+    year: '1948',
+  },
+  {
+    id: 'p-2',
+    title: 'The Fall &\nThe Outsider',
+    author: 'Albert Camus',
+    category: 'Philosophy',
+    isPersonal: true,
+    cover: 'linear-gradient(150deg, #683b1d 0%, #3d2110 100%)',
+    coverImage: 'https://covers.openlibrary.org/b/isbn/9780141182605-L.jpg',
+    pdfUrl: '/books/Camus, Albert - The Fall and The Outsider [tr. Gilbert] (Lythway, 1977).pdf',
+    pageCount: 24,
+    description: 'Two seminal existential masterpieces by Albert Camus confronting moral isolation, absurdity, and truth before execution.',
+    year: '1942 · 1956',
+  },
+  {
+    id: 'p-3',
+    title: 'Dark\nPsychology',
+    author: 'Behavioral Studies',
+    category: 'Psychology',
+    isPersonal: true,
+    cover: 'linear-gradient(150deg, #1e2024 0%, #101114 100%)',
+    coverImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600',
+    pdfUrl: '/books/Dark Psychology - How to Analyze People, and Their Emotional Intelligence To Be Able to Avoid.pdf',
+    pageCount: 20,
+    description: 'Principles of human persuasion, psychological profiling, micro-expressions, and cognitive influence defense.',
+    year: '2020',
+  },
+  {
+    id: 'p-4',
+    title: 'Early Greek\nPhilosophy',
+    author: 'John Burnet',
+    category: 'Philosophy',
+    isPersonal: true,
+    cover: 'linear-gradient(150deg, #1e3826 0%, #102216 100%)',
+    coverImage: 'https://covers.openlibrary.org/b/id/8231856-L.jpg',
+    pdfUrl: '/books/EARLY GREEK PHILOSOPHY.pdf',
+    pageCount: 28,
+    description: 'The monumental scholarly study tracing the dawn of rational cosmology and natural philosophy from Thales to Democritus.',
+    year: '1892',
+  },
+  {
+    id: 'p-5',
+    title: 'The Untethered\nSoul',
+    author: 'Michael A. Singer',
+    category: 'Philosophy',
+    isPersonal: true,
+    cover: 'linear-gradient(150deg, #162842 0%, #0d192a 100%)',
+    coverImage: 'https://covers.openlibrary.org/b/isbn/9781572245372-L.jpg',
+    pdfUrl: '/books/The Untethered Soul (Michael A. Singer Michael Alan Singer).pdf',
+    pageCount: 22,
+    description: 'The transformative journey beyond personal ego, untethering consciousness from compulsive thought and fear.',
+    year: '2007',
+  },
+  {
+    id: 'p-6',
+    title: 'Forbidden\nKnowledge',
+    author: 'Roger Shattuck',
+    category: 'Classic',
+    isPersonal: true,
+    cover: 'linear-gradient(150deg, #421420 0%, #200810 100%)',
+    coverImage: 'https://covers.openlibrary.org/b/isbn/9780156005517-L.jpg',
+    pdfUrl: '/books/FORBIDDEN KNOWLEDGE - PROMETHEUS TO PORNOGRAPHY.pdf',
+    pageCount: 30,
+    description: 'Investigating the philosophical and moral limits of human inquiry from mythic hubris and Eden to modern technology.',
+    year: '1996',
+  },
+  {
+    id: 'p-7',
+    title: 'History of\nCentral Banking',
+    author: 'Stephen Mitford Goodson',
+    category: 'History',
+    isPersonal: true,
+    cover: 'linear-gradient(150deg, #302818 0%, #1a150c 100%)',
+    coverImage: 'https://covers.openlibrary.org/b/isbn/9781912759170-L.jpg',
+    pdfUrl: '/books/A HISTORY OF CENTRAL BANKING AND THE ENSLAVEMENT OF MANKIND.pdf',
+    pageCount: 26,
+    description: 'A historical exposé tracing global currency issuance, fractional reserve systems, and national sovereignty.',
+    year: '2014',
+  },
+
+  // --- ADDITIONAL CURATED EDITIONS ---
+  {
+    id: '8',
     title: 'Shadows of\nthe Archive',
     author: 'Julian Morrow',
     category: 'Classic',
@@ -30,7 +126,7 @@ const ALL_BOOKS: BookItem[] = [
     year: '1924',
   },
   {
-    id: '2',
+    id: '9',
     title: 'The Temple\nof Lost Suns',
     author: 'Elena Rostova',
     category: 'Fantasy',
@@ -41,7 +137,7 @@ const ALL_BOOKS: BookItem[] = [
     year: '1952',
   },
   {
-    id: '3',
+    id: '10',
     title: 'Serpent\n& Thorn',
     author: 'Arthur Pendelton',
     category: 'Classic',
@@ -52,7 +148,7 @@ const ALL_BOOKS: BookItem[] = [
     year: '1888',
   },
   {
-    id: '4',
+    id: '11',
     title: 'The Last\nMessage',
     author: 'Clara Vance',
     category: 'Short Story',
@@ -63,7 +159,7 @@ const ALL_BOOKS: BookItem[] = [
     year: '2021',
   },
   {
-    id: '5',
+    id: '12',
     title: 'All the Light\nWe Cannot See',
     author: 'Anthony Doerr',
     category: 'Memoir',
@@ -74,7 +170,7 @@ const ALL_BOOKS: BookItem[] = [
     year: '2014',
   },
   {
-    id: '6',
+    id: '13',
     title: 'The Roommate\nRisk',
     author: 'Cassie Mae',
     category: 'Romance',
@@ -85,7 +181,7 @@ const ALL_BOOKS: BookItem[] = [
     year: '2019',
   },
   {
-    id: '7',
+    id: '14',
     title: 'Ashes of\nAeloria',
     author: 'Kaelen Drake',
     category: 'Fantasy',
@@ -96,7 +192,7 @@ const ALL_BOOKS: BookItem[] = [
     year: '1987',
   },
   {
-    id: '8',
+    id: '15',
     title: 'Own Your\nTime',
     author: 'Marcus Vane',
     category: 'Memoir',
@@ -107,7 +203,7 @@ const ALL_BOOKS: BookItem[] = [
     year: '2023',
   },
   {
-    id: '9',
+    id: '16',
     title: 'The Quiet\nWitness',
     author: 'Soren Lind',
     category: 'Short Story',
@@ -118,7 +214,7 @@ const ALL_BOOKS: BookItem[] = [
     year: '2011',
   },
   {
-    id: '10',
+    id: '17',
     title: 'The Light\nWe Carry',
     author: 'Michelle Obama',
     category: 'Memoir',
@@ -129,7 +225,7 @@ const ALL_BOOKS: BookItem[] = [
     year: '2022',
   },
   {
-    id: '11',
+    id: '18',
     title: 'The Bright\nBeyond',
     author: 'David Chalmers',
     category: 'Philosophy',
@@ -140,51 +236,7 @@ const ALL_BOOKS: BookItem[] = [
     year: '2020',
   },
   {
-    id: '12',
-    title: 'The Spaces\nBetween',
-    author: 'Aria Thorne',
-    category: 'Romance',
-    cover: 'linear-gradient(150deg, #c8b8a0 0%, #a89878 100%)',
-    coverImage: 'https://images.unsplash.com/photo-1495640388908-05fa85288e61?auto=format&fit=crop&q=80&w=600',
-    pageCount: 15,
-    description: 'A poetic story of distance, longing, and unsent handwritten letters across the Atlantic.',
-    year: '2016',
-  },
-  {
-    id: '13',
-    title: 'Sunshine and\nSecond Chances',
-    author: 'Brooke Miller',
-    category: 'Romance',
-    cover: 'linear-gradient(150deg, #f5e6b8 0%, #e8c870 100%)',
-    coverImage: 'https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&q=80&w=600',
-    pageCount: 20,
-    description: 'A lighthearted summer return to coastal hometowns and rekindled warmth.',
-    year: '2018',
-  },
-  {
-    id: '14',
-    title: 'The Stories\nWe Keep',
-    author: 'Nathaniel Reed',
-    category: 'Classic',
-    cover: 'linear-gradient(150deg, #b8a0d0 0%, #9480b8 100%)',
-    coverImage: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&q=80&w=600',
-    pageCount: 18,
-    description: 'A bibliophile unearths memoirs that predict the future of his own family.',
-    year: '1974',
-  },
-  {
-    id: '15',
-    title: 'The Right Swing\nWrong Timing',
-    author: 'Leo Harris',
-    category: 'Short Story',
-    cover: 'linear-gradient(150deg, #f0b8c8 0%, #e8a0b0 100%)',
-    coverImage: 'https://images.unsplash.com/photo-1516962215378-7fa2e137ae93?auto=format&fit=crop&q=80&w=600',
-    pageCount: 16,
-    description: 'The golden jazz era in Harlem through the eyes of a saxophonist.',
-    year: '1961',
-  },
-  {
-    id: '16',
+    id: '19',
     title: 'The Ivory\nTower',
     author: 'Archival Collection',
     category: 'Classic',
@@ -195,7 +247,7 @@ const ALL_BOOKS: BookItem[] = [
     year: '1930',
   },
   {
-    id: '17',
+    id: '20',
     title: 'Gilded\nDust',
     author: 'Archival Collection',
     category: 'Classic',
@@ -206,7 +258,7 @@ const ALL_BOOKS: BookItem[] = [
     year: '1908',
   },
   {
-    id: '18',
+    id: '21',
     title: 'Nocturne\nin Blue',
     author: 'Archival Collection',
     category: 'Memoir',
@@ -217,7 +269,7 @@ const ALL_BOOKS: BookItem[] = [
     year: '1955',
   },
   {
-    id: '19',
+    id: '22',
     title: 'Ember\nSpire',
     author: 'Archival Collection',
     category: 'Fantasy',
@@ -228,7 +280,7 @@ const ALL_BOOKS: BookItem[] = [
     year: '1984',
   },
   {
-    id: '20',
+    id: '23',
     title: 'The Iron\nCrest',
     author: 'Archival Collection',
     category: 'Fantasy',
@@ -239,7 +291,7 @@ const ALL_BOOKS: BookItem[] = [
     year: '1979',
   },
   {
-    id: '21',
+    id: '24',
     title: 'Solitude\n& Stone',
     author: 'Archival Collection',
     category: 'Philosophy',
@@ -248,39 +300,6 @@ const ALL_BOOKS: BookItem[] = [
     pageCount: 14,
     description: 'A hermit monk’s meditations on silence, granite, and eternity.',
     year: '1899',
-  },
-  {
-    id: '22',
-    title: 'Echoes\nof Glass',
-    author: 'Archival Collection',
-    category: 'Short Story',
-    cover: 'linear-gradient(150deg, #1a2028 0%, #101820 100%)',
-    coverImage: 'https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260528_043212_ce1559e3-e0a6-48c8-887f-1331a8e989c5.png&w=1920&q=85',
-    pageCount: 28,
-    description: 'Surrealist stories about mirror artisans in Renaissance Venice.',
-    year: '1968',
-  },
-  {
-    id: '23',
-    title: 'Ancient\nRites',
-    author: 'Archival Collection',
-    category: 'Classic',
-    cover: 'linear-gradient(150deg, #302818 0%, #201810 100%)',
-    coverImage: 'https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260528_032638_9520b937-d7e8-4f6a-88ba-8bbd1e8ecbfe.png&w=1920&q=85',
-    pageCount: 16,
-    description: 'Anthropological excavation of Neolithic standing stones and solar worship.',
-    year: '1912',
-  },
-  {
-    id: '24',
-    title: 'Vesper\nBreeze',
-    author: 'Archival Collection',
-    category: 'Romance',
-    cover: 'linear-gradient(150deg, #20282e 0%, #141c22 100%)',
-    coverImage: 'https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260528_043201_f749ce8e-72f6-46eb-8440-0f6bdbf2a782.png&w=1920&q=85',
-    pageCount: 19,
-    description: 'A romance set against the olive orchards of late nineteenth-century Florence.',
-    year: '1895',
   },
 ];
 
@@ -341,7 +360,14 @@ const BookCard: React.FC<{ book: BookItem; onClick: () => void }> = ({ book, onC
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
-      />
+      >
+        {/* Personal Volume Indicator */}
+        {book.isPersonal && (
+          <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded text-[8px] font-mono tracking-widest uppercase bg-black/70 text-[#d4af37] border border-[#d4af37]/30 backdrop-blur-sm z-20">
+            PDF
+          </span>
+        )}
+      </div>
     </div>
   );
 };
@@ -350,10 +376,11 @@ export const App: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [activeBook, setActiveBook] = useState<BookItem | null>(null);
 
-  const categories = ['All', 'Romance', 'Short Story', 'Memoir', 'Classic', 'Fantasy', 'Philosophy'];
+  const categories = ['All', 'Personal Library', 'Philosophy', 'Classic', 'Psychology', 'History', 'Fantasy', 'Memoir'];
 
   const filteredBooks = useMemo(() => {
     if (selectedCategory === 'All') return ALL_BOOKS;
+    if (selectedCategory === 'Personal Library') return ALL_BOOKS.filter((b) => b.isPersonal);
     return ALL_BOOKS.filter((b) => b.category.toLowerCase() === selectedCategory.toLowerCase());
   }, [selectedCategory]);
 
@@ -364,7 +391,18 @@ export const App: React.FC = () => {
   }, [filteredBooks]);
 
   const handleDownload = (book: BookItem) => {
-    // Generate a simple simulated download
+    if (book.pdfUrl) {
+      const link = document.createElement('a');
+      link.href = book.pdfUrl;
+      link.download = `${book.title.replace('\n', ' ')} - ${book.author}.pdf`;
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      return;
+    }
+
+    // Fallback simulation
     const element = document.createElement('a');
     const file = new Blob([`Archival Edition: ${book.title}\nAuthor: ${book.author}\nYear: ${book.year}\nCategory: ${book.category}\n\n${book.description}`], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
@@ -384,16 +422,16 @@ export const App: React.FC = () => {
         </div>
 
         <div className="nav-links">
-          <button onClick={() => setSelectedCategory('All')}>Catalogs</button>
-          <button onClick={() => setSelectedCategory('Classic')}>Editions</button>
-          <button onClick={() => setSelectedCategory('Philosophy')}>Hub</button>
-          <button onClick={() => setSelectedCategory('Memoir')}>Info</button>
+          <button onClick={() => setSelectedCategory('All')}>All Editions</button>
+          <button onClick={() => setSelectedCategory('Personal Library')}>My Library ({ALL_BOOKS.filter(b => b.isPersonal).length})</button>
+          <button onClick={() => setSelectedCategory('Philosophy')}>Philosophy</button>
+          <button onClick={() => setSelectedCategory('Classic')}>Classics</button>
         </div>
 
         <div className="nav-right">
-          <button onClick={() => setSelectedCategory('Fantasy')}>Join us</button>
+          <button onClick={() => setSelectedCategory('Personal Library')}>7 Personal Books</button>
           <button className="nav-cta" onClick={() => setActiveBook(ALL_BOOKS[0])}>
-            Build Your List
+            Open Featured
           </button>
         </div>
 
@@ -469,11 +507,18 @@ export const App: React.FC = () => {
             {/* Book Details */}
             <div className="flex-1 flex flex-col justify-between">
               <div>
-                <span className="text-[11px] font-mono tracking-widest uppercase text-[#d4af37] block mb-1">
-                  {activeBook.category} &middot; {activeBook.year}
-                </span>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[11px] font-mono tracking-widest uppercase text-[#d4af37]">
+                    {activeBook.category} &middot; {activeBook.year}
+                  </span>
+                  {activeBook.isPersonal && (
+                    <span className="px-2 py-0.5 rounded-full text-[9px] font-mono bg-gold/20 text-gold border border-gold/30">
+                      Personal PDF
+                    </span>
+                  )}
+                </div>
 
-                <h3 className="font-serif text-2xl text-[#f5f1ea] leading-tight whitespace-pre-line mb-1">
+                <h3 className="font-serif text-2xl text-[#f5efe6] leading-tight whitespace-pre-line mb-1">
                   {activeBook.title}
                 </h3>
 
@@ -487,20 +532,42 @@ export const App: React.FC = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => handleDownload(activeBook)}
-                  className="px-4 py-2.5 rounded-full bg-[#f5f1ea] text-[#0a0a0a] font-medium text-xs flex items-center gap-2 hover:bg-white transition-all transform hover:-translate-y-0.5 shadow-lg"
-                >
-                  <Download size={14} />
-                  <span>Download</span>
-                </button>
+              <div className="flex flex-wrap items-center gap-3">
+                {activeBook.pdfUrl ? (
+                  <>
+                    <a
+                      href={activeBook.pdfUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2.5 rounded-full bg-[#d4af37] text-[#0a0a0a] font-bold text-xs flex items-center gap-2 hover:bg-[#e5c26b] transition-all transform hover:-translate-y-0.5 shadow-lg"
+                    >
+                      <BookOpen size={14} />
+                      <span>Read Full PDF</span>
+                    </a>
+
+                    <button
+                      onClick={() => handleDownload(activeBook)}
+                      className="px-4 py-2.5 rounded-full bg-[#f5f1ea] text-[#0a0a0a] font-medium text-xs flex items-center gap-2 hover:bg-white transition-all transform hover:-translate-y-0.5 shadow-lg"
+                    >
+                      <Download size={14} />
+                      <span>Download PDF</span>
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => handleDownload(activeBook)}
+                    className="px-4 py-2.5 rounded-full bg-[#f5f1ea] text-[#0a0a0a] font-medium text-xs flex items-center gap-2 hover:bg-white transition-all transform hover:-translate-y-0.5 shadow-lg"
+                  >
+                    <Download size={14} />
+                    <span>Download</span>
+                  </button>
+                )}
 
                 <button
                   onClick={() => setActiveBook(null)}
                   className="px-4 py-2.5 rounded-full bg-white/5 border border-white/15 text-[#f5f1ea] text-xs flex items-center gap-2 hover:bg-white/10 transition-all"
                 >
-                  <span>Explore More</span>
+                  <span>Close</span>
                   <ArrowRight size={14} />
                 </button>
               </div>
