@@ -1,10 +1,13 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { VaultBook, useVaultStore } from '../../store/vaultStore';
+import { sounds } from '../../lib/sound';
 
 interface RelicBook3DProps {
   book: VaultBook;
+  index: number;
   position: [number, number, number];
   rotation: [number, number, number];
   isSelected: boolean;
@@ -12,6 +15,7 @@ interface RelicBook3DProps {
 
 export const RelicBook3D: React.FC<RelicBook3DProps> = ({
   book,
+  index,
   position,
   rotation,
   isSelected,
@@ -20,7 +24,7 @@ export const RelicBook3D: React.FC<RelicBook3DProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [coverTexture, setCoverTexture] = useState<THREE.Texture | null>(null);
 
-  const { setActiveBookId, setInspectedBook } = useVaultStore();
+  const { focusPedestal, setInspectedBook, openReader } = useVaultStore();
 
   const width = 0.95;
   const height = 1.35;
@@ -84,7 +88,7 @@ export const RelicBook3D: React.FC<RelicBook3DProps> = ({
   // Smooth floating / hover animation
   useFrame(() => {
     if (!groupRef.current) return;
-    const targetY = position[1] + (isHovered || isSelected ? 0.16 : 0);
+    const targetY = position[1] + (isHovered || isSelected ? 0.18 : 0);
     groupRef.current.position.y += (targetY - groupRef.current.position.y) * 0.12;
 
     // Gentle levitation breathing motion when selected or hovered
@@ -101,12 +105,17 @@ export const RelicBook3D: React.FC<RelicBook3DProps> = ({
       rotation={rotation}
       onClick={(e) => {
         e.stopPropagation();
-        setActiveBookId(book.id);
-        setInspectedBook(book);
+        focusPedestal(index);
+        sounds.playTactileClick();
+      }}
+      onDoubleClick={(e) => {
+        e.stopPropagation();
+        openReader(book);
       }}
       onPointerEnter={(e) => {
         e.stopPropagation();
         setIsHovered(true);
+        sounds.playTactileClick();
         document.body.style.cursor = 'pointer';
       }}
       onPointerLeave={() => {
@@ -166,6 +175,51 @@ export const RelicBook3D: React.FC<RelicBook3DProps> = ({
             side={THREE.DoubleSide}
           />
         </mesh>
+      )}
+
+      {/* Floating 3D Interactive Lectern Tooltip Card */}
+      {(isHovered || isSelected) && (
+        <Html
+          position={[0, height / 2 + 0.38, 0]}
+          center
+          distanceFactor={6.5}
+          className="pointer-events-auto select-none"
+        >
+          <div className="bg-white/95 backdrop-blur-xl border border-stone-200/90 shadow-2xl rounded-2xl p-3.5 min-w-[210px] text-center transform -translate-y-2 transition-all animate-fade-in">
+            <span className="text-[10px] font-mono uppercase tracking-widest text-[#c59b27] font-bold block mb-1">
+              Vol. {index + 1} &middot; {book.category}
+            </span>
+            <h3 className="font-serif text-sm font-semibold text-stone-900 leading-snug line-clamp-1">
+              {book.title}
+            </h3>
+            <p className="font-serif italic text-xs text-stone-600 mb-2.5">
+              {book.author}
+            </p>
+            <div className="flex items-center justify-center gap-1.5">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openReader(book);
+                }}
+                className="px-3 py-1 rounded-full bg-[#c59b27] hover:bg-[#d8ab32] text-stone-950 font-bold font-mono text-[11px] uppercase tracking-wider transition-all shadow-sm flex items-center gap-1 cursor-pointer"
+              >
+                <span>Read Online</span>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setInspectedBook(book);
+                }}
+                className="px-2.5 py-1 rounded-full border border-stone-300 hover:bg-stone-100 text-stone-700 font-mono text-[11px] uppercase tracking-wider transition-all cursor-pointer"
+              >
+                Inspect
+              </button>
+            </div>
+            <span className="text-[9px] font-mono text-stone-400 block mt-1.5">
+              (Double-click book to read)
+            </span>
+          </div>
+        </Html>
       )}
     </group>
   );

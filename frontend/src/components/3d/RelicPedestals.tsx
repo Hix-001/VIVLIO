@@ -1,31 +1,26 @@
 import React, { useMemo } from 'react';
 import * as THREE from 'three';
-import { useVaultStore } from '../../store/vaultStore';
+import { useVaultStore, getPedestalTransform } from '../../store/vaultStore';
 import { RelicBook3D } from './RelicBook3D';
 
 export const RelicPedestals: React.FC = () => {
-  const { books, activeBookId, selectedCategory } = useVaultStore();
+  const { books, activeBookId, selectedCategory, focusPedestal } = useVaultStore();
 
-  const pedestalRadius = 3.6;
   const count = books.length; // 7 books
 
   // Compute positions of the 7 pedestals in an arc / circle
   const pedestalNodes = useMemo(() => {
     return books.map((book, i) => {
-      // Place across front-facing arc so camera has a natural view
-      const angle = ((i - (count - 1) / 2) / count) * (Math.PI * 1.25) + Math.PI / 2;
-      const x = Math.cos(angle) * pedestalRadius;
-      const z = Math.sin(angle) * pedestalRadius;
-      const rotY = -angle + Math.PI / 2;
-
+      const { x, z, rotY } = getPedestalTransform(i, count);
       return {
         book,
+        index: i,
         x,
         z,
         rotY,
       };
     });
-  }, [books, count, pedestalRadius]);
+  }, [books, count]);
 
   // Materials for the pedestals in Light Mode (Travertine, Carrara Marble, Champagne Gold)
   const { pedestalMat, marbleMat, brassMat } = useMemo(() => {
@@ -50,7 +45,7 @@ export const RelicPedestals: React.FC = () => {
 
   return (
     <group>
-      {pedestalNodes.map(({ book, x, z, rotY }) => {
+      {pedestalNodes.map(({ book, index, x, z, rotY }) => {
         const isSelected = activeBookId === book.id;
         const matchesCategory =
           selectedCategory === 'All' || book.category === selectedCategory;
@@ -83,9 +78,35 @@ export const RelicPedestals: React.FC = () => {
               />
             </mesh>
 
+            {/* Interactive Floor Waypoint Beacon (Click to walk directly here) */}
+            <mesh
+              position={[0, -0.68, 1.1]}
+              rotation={[-Math.PI / 2, 0, 0]}
+              onClick={(e) => {
+                e.stopPropagation();
+                focusPedestal(index);
+              }}
+              onPointerOver={(e) => {
+                e.stopPropagation();
+                document.body.style.cursor = 'pointer';
+              }}
+              onPointerOut={() => {
+                document.body.style.cursor = 'default';
+              }}
+            >
+              <ringGeometry args={[0.18, 0.3, 32]} />
+              <meshBasicMaterial
+                color={isSelected ? '#c59b27' : '#d2c8b8'}
+                transparent
+                opacity={isSelected ? 0.95 : 0.45}
+                side={THREE.DoubleSide}
+              />
+            </mesh>
+
             {/* Interactive 3D Book Volume */}
             <RelicBook3D
               book={book}
+              index={index}
               position={[0, 1.1, 0]}
               rotation={[-0.15, 0, 0]} // Slight back-tilt like an altar lectern
               isSelected={isSelected}

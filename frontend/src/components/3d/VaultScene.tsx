@@ -1,5 +1,5 @@
-import React, { Suspense, useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
+import React, { Suspense, useRef, useEffect } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
 import { ThreeErrorBoundary } from './ThreeErrorBoundary';
@@ -10,16 +10,73 @@ import { RelicPedestals } from './RelicPedestals';
 import { AtmosphericDust } from './AtmosphericDust';
 import { useVaultStore } from '../../store/vaultStore';
 
-// Camera focal glide animation controller
+// Camera focal glide & WASD walking animation controller
 const CameraController: React.FC = () => {
-  const { cameraTarget } = useVaultStore();
+  const {
+    cameraTarget,
+    cameraPosition,
+    walkCamera,
+    focusPedestal,
+    resetView,
+    isReaderOpen,
+  } = useVaultStore();
   const controlsRef = useRef<any>(null);
+  const { camera } = useThree();
 
-  useFrame(() => {
+  const keysDown = useRef<{ [key: string]: boolean }>({});
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (isReaderOpen) return;
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      keysDown.current[e.key.toLowerCase()] = true;
+
+      // Hotkeys 1-7 for instant pedestal focus
+      const num = parseInt(e.key, 10);
+      if (num >= 1 && num <= 7) {
+        focusPedestal(num - 1);
+      } else if (e.key.toLowerCase() === 'c' || e.key === 'Escape') {
+        resetView();
+      }
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      keysDown.current[e.key.toLowerCase()] = false;
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+  }, [isReaderOpen, focusPedestal, resetView]);
+
+  useFrame((_, delta) => {
+    // 1. WASD / Arrow Key Free-Roam Walking
+    if (!isReaderOpen) {
+      let forward = 0;
+      let strafe = 0;
+      const speed = 4.2 * delta;
+
+      if (keysDown.current['w'] || keysDown.current['arrowup']) forward += speed;
+      if (keysDown.current['s'] || keysDown.current['arrowdown']) forward -= speed;
+      if (keysDown.current['d'] || keysDown.current['arrowright']) strafe += speed;
+      if (keysDown.current['a'] || keysDown.current['arrowleft']) strafe -= speed;
+
+      if (forward !== 0 || strafe !== 0) {
+        walkCamera(forward, strafe);
+      }
+    }
+
+    // 2. Smoothly glide camera position & target
+    camera.position.lerp(new THREE.Vector3(...cameraPosition), 0.08);
+
     if (controlsRef.current) {
       controlsRef.current.target.lerp(
         new THREE.Vector3(...cameraTarget),
-        0.05
+        0.08
       );
       controlsRef.current.update();
     }
@@ -30,10 +87,10 @@ const CameraController: React.FC = () => {
       ref={controlsRef}
       enableDamping
       dampingFactor={0.06}
-      minDistance={3.2}
-      maxDistance={11.0}
-      minPolarAngle={Math.PI / 4.5}
-      maxPolarAngle={Math.PI / 2 + 0.02}
+      minDistance={0.8}
+      maxDistance={14.0}
+      minPolarAngle={Math.PI / 6}
+      maxPolarAngle={Math.PI / 2 + 0.05}
       autoRotate={false}
       target={[0, 0, 0]}
     />

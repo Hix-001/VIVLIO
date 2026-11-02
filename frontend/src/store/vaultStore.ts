@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { sounds } from '../lib/sound';
 
 export interface VaultBook {
   id: string;
@@ -14,6 +15,17 @@ export interface VaultBook {
   foilColor: string;
   runeGlyph: string;
   accentHue: string;
+}
+
+export const PEDESTAL_RADIUS = 3.6;
+export const BOOK_COUNT = 7;
+
+export function getPedestalTransform(i: number, count: number = BOOK_COUNT, radius: number = PEDESTAL_RADIUS) {
+  const angle = ((i - (count - 1) / 2) / count) * (Math.PI * 1.25) + Math.PI / 2;
+  const x = Math.cos(angle) * radius;
+  const z = Math.sin(angle) * radius;
+  const rotY = -angle + Math.PI / 2;
+  return { x, z, rotY, angle };
 }
 
 export const PERSONAL_VAULT_BOOKS: VaultBook[] = [
@@ -131,7 +143,10 @@ interface VaultState {
   inspectedBook: VaultBook | null;
   readingBook: VaultBook | null;
   isReaderOpen: boolean;
+  readerViewMode: 'spread' | 'single';
   cameraTarget: [number, number, number];
+  cameraPosition: [number, number, number];
+  focusedPedestalIndex: number | null;
   isAudioMuted: boolean;
   isLoading: boolean;
   
@@ -140,29 +155,109 @@ interface VaultState {
   setInspectedBook: (book: VaultBook | null) => void;
   openReader: (book: VaultBook) => void;
   closeReader: () => void;
+  setReaderViewMode: (mode: 'spread' | 'single') => void;
   setCameraTarget: (target: [number, number, number]) => void;
+  setCameraPosition: (pos: [number, number, number]) => void;
+  focusPedestal: (index: number) => void;
+  resetView: () => void;
+  walkCamera: (forward: number, strafe: number) => void;
   toggleAudio: () => void;
   setIsLoading: (loading: boolean) => void;
 }
 
-export const useVaultStore = create<VaultState>((set) => ({
+export const useVaultStore = create<VaultState>((set, get) => ({
   books: PERSONAL_VAULT_BOOKS,
   selectedCategory: 'All',
   activeBookId: null,
   inspectedBook: null,
   readingBook: null,
   isReaderOpen: false,
+  readerViewMode: 'spread',
   cameraTarget: [0, 0, 0],
-  isAudioMuted: true,
+  cameraPosition: [0, 2.2, 7.8],
+  focusedPedestalIndex: null,
+  isAudioMuted: false, // unmuted by default for tactile clicks & ambient sanctuary
   isLoading: true,
 
   setSelectedCategory: (category) => set({ selectedCategory: category }),
   setActiveBookId: (id) => set({ activeBookId: id }),
   setInspectedBook: (book) => set({ inspectedBook: book }),
-  openReader: (book) => set({ readingBook: book, isReaderOpen: true, inspectedBook: null }),
+  openReader: (book) => {
+    sounds.playPaperTurn();
+    set({ readingBook: book, isReaderOpen: true, inspectedBook: null });
+  },
   closeReader: () => set({ isReaderOpen: false, readingBook: null }),
+  setReaderViewMode: (mode) => set({ readerViewMode: mode }),
   setCameraTarget: (target) => set({ cameraTarget: target }),
-  toggleAudio: () => set((state) => ({ isAudioMuted: !state.isAudioMuted })),
+  setCameraPosition: (pos) => set({ cameraPosition: pos }),
+  
+  focusPedestal: (index: number) => {
+    const { books } = get();
+    if (index < 0 || index >= books.length) return;
+    const book = books[index];
+    const { x, z, rotY } = getPedestalTransform(index, books.length, PEDESTAL_RADIUS);
+    
+    // Position camera ~1.6m in front of the book looking straight at the lectern
+    const camX = x + Math.sin(rotY) * 1.6;
+    const camZ = z + Math.cos(rotY) * 1.6;
+    const camY = 1.35; // Eye height at lectern
+
+    sounds.playSanctuaryChime();
+
+    set({
+      focusedPedestalIndex: index,
+      activeBookId: book.id,
+      cameraTarget: [x, 0.45, z],
+      cameraPosition: [camX, camY, camZ],
+    });
+  },
+
+  resetView: () => {
+    sounds.playTactileClick();
+    set({
+      focusedPedestalIndex: null,
+      activeBookId: null,
+      cameraTarget: [0, 0, 0],
+      cameraPosition: [0, 2.2, 7.8],
+    });
+  },
+
+  walkCamera: (forward: number, strafe: number) => {
+    const { cameraPosition, cameraTarget } = get();
+    // Compute forward vector in XZ plane
+    const dx = cameraTarget[0] - cameraPosition[0];
+    const dz = cameraTarget[2] - cameraPosition[2];
+    const len = Math.sqrt(dx * dx + dz * dz) || 1;
+    const fX = dx / len;
+    const fZ = dz / len;
+    
+    // Perpendicular strafe vector
+    const sX = -fZ;
+    const sZ = fX;
+
+    const moveX = fX * forward + sX * strafe;
+    const moveZ = fZ * forward + sZ * strafe;
+
+    set({
+      focusedPedestalIndex: null,
+      cameraPosition: [
+        cameraPosition[0] + moveX,
+        cameraPosition[1],
+        cameraPosition[2] + moveZ,
+      ],
+      cameraTarget: [
+        cameraTarget[0] + moveX,
+        cameraTarget[1],
+        cameraTarget[2] + moveZ,
+      ],
+    });
+  },
+
+  toggleAudio: () => set((state) => {
+    const nextMuted = !state.isAudioMuted;
+    sounds.setMuted(nextMuted);
+    return { isAudioMuted: nextMuted };
+  }),
   setIsLoading: (loading) => set({ isLoading: loading }),
 }));
 
