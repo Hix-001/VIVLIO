@@ -27,23 +27,23 @@ export const RelicPedestals: React.FC = () => {
     });
   }, [books, count, pedestalRadius]);
 
-  // Materials for the pedestals
-  const { pedestalMat, brassMat, baseRingMat } = useMemo(() => {
+  // Materials for the pedestals in Light Mode (Travertine, Carrara Marble, Champagne Gold)
+  const { pedestalMat, marbleMat, brassMat } = useMemo(() => {
     return {
       pedestalMat: new THREE.MeshStandardMaterial({
-        color: '#121115',
-        roughness: 0.85,
-        metalness: 0.15,
+        color: '#ebe6dd', // Honed Roman travertine
+        roughness: 0.82,
+        metalness: 0.04,
+      }),
+      marbleMat: new THREE.MeshStandardMaterial({
+        color: '#f6f4ee', // Polished Carrara marble
+        roughness: 0.62,
+        metalness: 0.08,
       }),
       brassMat: new THREE.MeshStandardMaterial({
-        color: '#c59b27',
+        color: '#c8a148', // Brushed champagne gold
         roughness: 0.35,
         metalness: 0.85,
-      }),
-      baseRingMat: new THREE.MeshBasicMaterial({
-        color: '#00f0ff',
-        transparent: true,
-        opacity: 0.45,
       }),
     };
   }, []);
@@ -57,28 +57,28 @@ export const RelicPedestals: React.FC = () => {
 
         return (
           <group key={book.id} position={[x, -0.7, z]} rotation={[0, rotY, 0]}>
-            {/* Hexagonal Basalt Plinth Base */}
+            {/* Hexagonal Travertine Plinth Base */}
             <mesh position={[0, -0.4, 0]} receiveShadow material={pedestalMat}>
               <cylinderGeometry args={[0.7, 0.85, 0.4, 6]} />
             </mesh>
 
-            {/* Stepped Upper Column */}
-            <mesh position={[0, 0, 0]} castShadow receiveShadow material={pedestalMat}>
+            {/* Stepped Upper Column in Polished Carrara Marble */}
+            <mesh position={[0, 0, 0]} castShadow receiveShadow material={marbleMat}>
               <cylinderGeometry args={[0.55, 0.65, 0.5, 6]} />
             </mesh>
 
-            {/* Brass Trim Collar */}
+            {/* Champagne Gold Trim Collar */}
             <mesh position={[0, 0.28, 0]} material={brassMat}>
               <cylinderGeometry args={[0.58, 0.58, 0.06, 6]} />
             </mesh>
 
-            {/* Glowing Rune Altar Pad on Pedestal Top */}
+            {/* Radiant Altar Pad on Pedestal Top */}
             <mesh position={[0, 0.32, 0]} rotation={[-Math.PI / 2, 0, 0]}>
               <ringGeometry args={[0.2, 0.5, 6]} />
               <meshBasicMaterial
-                color={matchesCategory ? book.accentHue : '#44403c'}
+                color={matchesCategory ? book.accentHue : '#d5cfc5'}
                 transparent
-                opacity={matchesCategory ? 0.85 : 0.25}
+                opacity={matchesCategory ? 0.9 : 0.3}
                 side={THREE.DoubleSide}
               />
             </mesh>
@@ -96,3 +96,4 @@ export const RelicPedestals: React.FC = () => {
     </group>
   );
 };
+

@@ -42,61 +42,68 @@ const CameraController: React.FC = () => {
 
 export const VaultScene: React.FC = () => {
   return (
-    <div className="absolute inset-0 w-full h-full bg-[#0a090b] cursor-grab active:cursor-grabbing select-none overflow-hidden">
+    <div className="absolute inset-0 w-full h-full bg-[#f5f2eb] cursor-grab active:cursor-grabbing select-none overflow-hidden">
       <ThreeErrorBoundary>
         <Canvas
           shadows={false}
-          dpr={[1, 1.75]}
+          dpr={[1.5, 2]}
           camera={{ position: [0, 2.2, 7.8], fov: 42 }}
           gl={{
             powerPreference: 'high-performance',
             antialias: true,
             alpha: false,
+            toneMapping: THREE.ACESFilmicToneMapping,
+            toneMappingExposure: 1.15,
           }}
         >
-          {/* Deep Void Ambient Background Color */}
-          <color attach="background" args={['#0c0b0e']} />
-          <fog attach="fog" args={['#0c0b0e', 7.5, 18.0]} />
+          {/* Luminous Architectural Daylight Background & Depth Fog */}
+          <color attach="background" args={['#f5f2eb']} />
+          <fog attach="fog" args={['#f5f2eb', 9.0, 24.0]} />
 
           <Suspense fallback={null}>
             <PerspectiveCamera makeDefault position={[0, 2.2, 7.8]} fov={42} />
             <CameraController />
 
-            {/* ================= LIGHTING SCHEME ================= */}
-            {/* Ambient Monastic Fill Light */}
-            <ambientLight color="#181520" intensity={0.9} />
+            {/* ================= SUNLIT ILLUMINATION SCHEME ================= */}
+            {/* 1. Soft Sky Blue Atmospheric Fill */}
+            <ambientLight color="#f0f6fc" intensity={1.6} />
 
-            {/* Main Overhead Oculus Sunlight / Spotlight */}
+            {/* 2. Main Overhead Oculus Sunlight */}
             <spotLight
-              position={[0, 5.2, 0]}
+              position={[0, 7.5, 0]}
               target-position={[0, 0, 0]}
-              color="#fff5e6"
-              intensity={2.8}
-              angle={Math.PI / 4}
-              penumbra={0.8}
-              distance={14}
+              color="#fff9ee"
+              intensity={3.2}
+              angle={Math.PI / 3.5}
+              penumbra={0.75}
+              distance={20}
             />
 
-            {/* Cyan Cybernetic Accent Light */}
-            <pointLight position={[-4.5, 2.5, -3.0]} color="#00f0ff" intensity={1.4} distance={9} />
+            {/* 3. Golden Angled Sunbeam */}
+            <directionalLight
+              position={[4, 8, 5]}
+              color="#fff3dc"
+              intensity={2.2}
+            />
 
-            {/* Warm Gilded Brass Accent Light */}
-            <pointLight position={[4.5, 2.5, 3.0]} color="#ffb700" intensity={1.4} distance={9} />
+            {/* 4. Champagne Warm Architectural Bounce Lights */}
+            <pointLight position={[-4.5, 3.0, -3.0]} color="#edd5a4" intensity={1.6} distance={14} />
+            <pointLight position={[4.5, 2.5, 3.0]} color="#f2e2be" intensity={1.4} distance={14} />
 
             {/* ================= 3D ARCHITECTURAL LAYERS ================= */}
-            {/* 1. Monolithic Basalt Chamber & Pillars */}
+            {/* 1. Honed Travertine & Carrara Marble Chamber */}
             <BrutalistArchitecture />
 
             {/* 2. Instanced Archival Stacks (500+ Books, 1 Draw Call) */}
             <ArchivalStacks />
 
-            {/* 3. Holographic Rune Bands & Floating Glyphs */}
-            <HolographicRunes color="#00f0ff" radius={3.8} height={1.5} />
+            {/* 3. Radiant Gilded Rune Bands & Floating Glyphs */}
+            <HolographicRunes color="#9a7322" radius={3.8} height={1.5} />
 
-            {/* 4. The 7 Personal Relic Volumes on Hexagonal Pedestals */}
+            {/* 4. The 7 Personal Relic Volumes on Travertine Pedestals */}
             <RelicPedestals />
 
-            {/* 5. Volumetric Atmospheric Particulate Field */}
+            {/* 5. Golden Sunbeam Mote Particulates */}
             <AtmosphericDust count={150} />
           </Suspense>
         </Canvas>
@@ -104,3 +111,4 @@ export const VaultScene: React.FC = () => {
     </div>
   );
 };
+

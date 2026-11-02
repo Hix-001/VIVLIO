@@ -9,7 +9,7 @@ interface HolographicRunesProps {
 }
 
 export const HolographicRunes: React.FC<HolographicRunesProps> = ({
-  color = '#00f0ff',
+  color = '#9a7322',
   radius = 3.6,
   height = 1.6,
 }) => {
@@ -29,7 +29,7 @@ export const HolographicRunes: React.FC<HolographicRunesProps> = ({
       ctx.font = 'bold 22px monospace';
       ctx.textAlign = 'center';
       
-      const text = '◊ // ARCHIVAL VAULT // VIVLIO RELICS // Ψ 7 VOLUMES // 1948 - 2026 // ◊ // COGNITIO ET ANIMA // ';
+      const text = '◊ // ARCHIVAL SANCTUARY // VIVLIO RELICS // Ψ 7 VOLUMES // 1948 - 2026 // ◊ // COGNITIO ET ANIMA // ';
       ctx.fillText(text + text, 512, 70);
     }
     const tex = new THREE.CanvasTexture(canvas);
@@ -60,24 +60,22 @@ export const HolographicRunes: React.FC<HolographicRunesProps> = ({
           <meshBasicMaterial
             map={runeTexture}
             transparent
-            opacity={0.65}
+            opacity={0.75}
             side={THREE.DoubleSide}
-            blending={THREE.AdditiveBlending}
             depthWrite={false}
           />
         </mesh>
       </group>
 
-      {/* Thin Geometric Cyan Accent Ring */}
+      {/* Thin Geometric Champagne Accent Ring */}
       <group ref={ring2Ref} position={[0, -0.3, 0]}>
         <mesh rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[radius * 0.96, radius * 0.98, 48]} />
           <meshBasicMaterial
             color={color}
             transparent
-            opacity={0.4}
+            opacity={0.5}
             side={THREE.DoubleSide}
-            blending={THREE.AdditiveBlending}
             depthWrite={false}
           />
         </mesh>
@@ -88,11 +86,10 @@ export const HolographicRunes: React.FC<HolographicRunesProps> = ({
         <mesh rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[radius * 1.05, radius * 1.06, 64]} />
           <meshBasicMaterial
-            color="#ffb700"
+            color="#d4af37"
             transparent
-            opacity={0.35}
+            opacity={0.45}
             side={THREE.DoubleSide}
-            blending={THREE.AdditiveBlending}
             depthWrite={false}
           />
         </mesh>
@@ -100,3 +97,4 @@ export const HolographicRunes: React.FC<HolographicRunesProps> = ({
     </group>
   );
 };
+

@@ -64,3 +64,4 @@ export const AtmosphericDust: React.FC<{ count?: number }> = ({ count = 160 }) =
     </points>
   );
 };
+

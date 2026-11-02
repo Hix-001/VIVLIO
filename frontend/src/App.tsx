@@ -3,12 +3,13 @@ import { VaultScene } from './components/3d/VaultScene';
 import { VaultHUD } from './components/hud/VaultHUD';
 import { BookRelicModal } from './components/hud/BookRelicModal';
 import { PreloaderHUD } from './components/hud/PreloaderHUD';
+import { OnlineReader } from './components/reader/OnlineReader';
 import { useVaultStore } from './store/vaultStore';
 
 export const App: React.FC = () => {
   const { isAudioMuted } = useVaultStore();
 
-  // Procedural Cyber-Monastic Ambient Drone (55Hz sacred low drone)
+  // Subtle Acoustic Harmonic Drone
   useEffect(() => {
     if (isAudioMuted) return;
 
@@ -22,12 +23,12 @@ export const App: React.FC = () => {
         osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
 
-        // 55Hz Low Monastic drone
+        // 65Hz Harmonic resonance
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(55, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(65, audioCtx.currentTime);
 
-        // Very gentle ambient volume
-        gain.gain.setValueAtTime(0.035, audioCtx.currentTime);
+        // Very gentle acoustic ambient volume
+        gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
 
         osc.connect(gain);
         gain.connect(audioCtx.destination);
@@ -46,17 +47,20 @@ export const App: React.FC = () => {
   }, [isAudioMuted]);
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#0a090b] text-[#f5efe6] select-none font-sans">
-      {/* 1. Full 3D Cyber-Monastic Vault Scene */}
+    <div className="relative w-screen h-screen overflow-hidden bg-[#f5f2eb] text-stone-900 select-none font-sans">
+      {/* 1. Full 3D Sunlit Archival Sanctuary */}
       <VaultScene />
 
-      {/* 2. Cyber-Monastic HUD Interface Overlay */}
+      {/* 2. Light Mode Glass HUD Interface */}
       <VaultHUD />
 
-      {/* 3. Holographic Relic Examination & PDF Reader / Download Modal */}
+      {/* 3. Luxury Relic Examination Modal */}
       <BookRelicModal />
 
-      {/* 4. Atmospheric Preloader Telemetry */}
+      {/* 4. Full-Featured Two-Page Physical Online Reader */}
+      <OnlineReader />
+
+      {/* 5. Atmospheric Preloader Telemetry */}
       <PreloaderHUD />
     </div>
   );

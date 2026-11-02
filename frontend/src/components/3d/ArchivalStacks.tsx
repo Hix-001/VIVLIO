@@ -4,15 +4,17 @@ import * as THREE from 'three';
 export const ArchivalStacks: React.FC = () => {
   const meshRef = useRef<THREE.InstancedMesh>(null);
 
-  // Antique cyber-monastic palette
+  // Elegant archival library palette (clothbound, terracotta, linen, and gilded leather)
   const palette = useMemo(() => [
-    new THREE.Color('#1f1712'), // Dark weathered leather
-    new THREE.Color('#0d1824'), // Deep abyssal navy
-    new THREE.Color('#102218'), // Monastic moss/emerald
-    new THREE.Color('#2e1218'), // Imperial oxblood
-    new THREE.Color('#1a1a1e'), // Obsidian basalt
-    new THREE.Color('#382812'), // Gilded calfskin
-    new THREE.Color('#141d28'), // Prussian slate
+    new THREE.Color('#8b4513'), // Saddle leather
+    new THREE.Color('#2e4057'), // French blue linen
+    new THREE.Color('#3b5249'), // Forest sage
+    new THREE.Color('#6b2d35'), // Warm Bordeaux
+    new THREE.Color('#d4a373'), // Raw sienna / wheat
+    new THREE.Color('#b5838d'), // Muted rose
+    new THREE.Color('#c59b27'), // Gilded ochre
+    new THREE.Color('#4a5568'), // Slate blue
+    new THREE.Color('#9c6644'), // Terracotta
   ], []);
 
   // Compute positions of books in the alcoves between the 8 perimeter pillars
@@ -34,7 +36,7 @@ export const ArchivalStacks: React.FC = () => {
       const alcoveRotY = -angle + Math.PI / 2;
 
       tiers.forEach((tierY) => {
-        // Wooden/basalt shelf plank
+        // Honed white oak / travertine shelf plank
         shelfGeoms.push({
           position: [alcoveX, tierY - 0.05, alcoveZ],
           rotation: [0, alcoveRotY, 0],
@@ -95,7 +97,7 @@ export const ArchivalStacks: React.FC = () => {
 
   return (
     <group>
-      {/* Basalt Wall Shelf Planks */}
+      {/* Light Travertine / Oak Wall Shelf Planks */}
       {shelves.map((s, idx) => (
         <mesh
           key={`archival-shelf-${idx}`}
@@ -104,7 +106,7 @@ export const ArchivalStacks: React.FC = () => {
           receiveShadow
         >
           <boxGeometry args={s.size} />
-          <meshStandardMaterial color="#1a181c" roughness={0.85} metalness={0.15} />
+          <meshStandardMaterial color="#ded7cb" roughness={0.78} metalness={0.06} />
         </mesh>
       ))}
 
@@ -115,7 +117,7 @@ export const ArchivalStacks: React.FC = () => {
         receiveShadow
       >
         <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial roughness={0.75} metalness={0.12} />
+        <meshStandardMaterial roughness={0.65} metalness={0.08} />
       </instancedMesh>
     </group>
   );

@@ -129,6 +129,8 @@ interface VaultState {
   selectedCategory: string;
   activeBookId: string | null;
   inspectedBook: VaultBook | null;
+  readingBook: VaultBook | null;
+  isReaderOpen: boolean;
   cameraTarget: [number, number, number];
   isAudioMuted: boolean;
   isLoading: boolean;
@@ -136,6 +138,8 @@ interface VaultState {
   setSelectedCategory: (category: string) => void;
   setActiveBookId: (id: string | null) => void;
   setInspectedBook: (book: VaultBook | null) => void;
+  openReader: (book: VaultBook) => void;
+  closeReader: () => void;
   setCameraTarget: (target: [number, number, number]) => void;
   toggleAudio: () => void;
   setIsLoading: (loading: boolean) => void;
@@ -146,6 +150,8 @@ export const useVaultStore = create<VaultState>((set) => ({
   selectedCategory: 'All',
   activeBookId: null,
   inspectedBook: null,
+  readingBook: null,
+  isReaderOpen: false,
   cameraTarget: [0, 0, 0],
   isAudioMuted: true,
   isLoading: true,
@@ -153,7 +159,11 @@ export const useVaultStore = create<VaultState>((set) => ({
   setSelectedCategory: (category) => set({ selectedCategory: category }),
   setActiveBookId: (id) => set({ activeBookId: id }),
   setInspectedBook: (book) => set({ inspectedBook: book }),
+  openReader: (book) => set({ readingBook: book, isReaderOpen: true, inspectedBook: null }),
+  closeReader: () => set({ isReaderOpen: false, readingBook: null }),
   setCameraTarget: (target) => set({ cameraTarget: target }),
   toggleAudio: () => set((state) => ({ isAudioMuted: !state.isAudioMuted })),
   setIsLoading: (loading) => set({ isLoading: loading }),
 }));
+
+

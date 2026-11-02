@@ -27,7 +27,7 @@ export const RelicBook3D: React.FC<RelicBook3DProps> = ({
   const depth = 0.22;
   const boardThickness = 0.025;
 
-  // Load cover art texture
+  // Load cover art texture with high-fidelity anisotropic filtering
   useEffect(() => {
     if (book.coverImage) {
       const loader = new THREE.TextureLoader();
@@ -36,6 +36,10 @@ export const RelicBook3D: React.FC<RelicBook3DProps> = ({
         book.coverImage,
         (tex) => {
           tex.colorSpace = THREE.SRGBColorSpace;
+          tex.anisotropy = 8;
+          tex.minFilter = THREE.LinearMipmapLinearFilter;
+          tex.magFilter = THREE.LinearFilter;
+          tex.generateMipmaps = true;
           setCoverTexture(tex);
         },
         undefined,
@@ -151,19 +155,19 @@ export const RelicBook3D: React.FC<RelicBook3DProps> = ({
         />
       </mesh>
 
-      {/* Holographic Under-Pedestal Halo when Hovered / Selected */}
+      {/* Under-Pedestal Radiant Ring when Hovered / Selected */}
       {(isHovered || isSelected) && (
         <mesh position={[0, -height / 2 - 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[0.6, 0.75, 32]} />
+          <ringGeometry args={[0.55, 0.75, 48]} />
           <meshBasicMaterial
             color={book.accentHue}
             transparent
-            opacity={0.7}
+            opacity={0.85}
             side={THREE.DoubleSide}
-            blending={THREE.AdditiveBlending}
           />
         </mesh>
       )}
     </group>
   );
 };
+

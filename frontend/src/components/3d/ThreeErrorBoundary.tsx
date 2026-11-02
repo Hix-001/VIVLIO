@@ -52,3 +52,4 @@ export class ThreeErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
+
