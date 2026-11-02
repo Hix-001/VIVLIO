@@ -77,6 +77,13 @@ export const OnlineReader: React.FC = () => {
     } catch {}
   }, [currentSpread, readingBook, isReaderOpen]);
 
+  const handleClose = () => {
+    if (readingBook) {
+      pdfRenderer.cleanBookCanvases(readingBook.pdfUrl);
+    }
+    closeReader();
+  };
+
   // Download original PDF
   const handleDownload = () => {
     if (!readingBook) return;
@@ -186,14 +193,14 @@ export const OnlineReader: React.FC = () => {
       }
       // Escape to return to sanctuary
       else if (e.key === 'Escape') {
-        closeReader();
+        handleClose();
       }
       // Explicitly NO other keys move pages
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isReaderOpen, currentSpread, totalSpreads, showPageInput, closeReader]);
+  }, [isReaderOpen, currentSpread, totalSpreads, showPageInput, handleClose]);
 
   if (!isReaderOpen || !readingBook) return null;
 
@@ -251,8 +258,8 @@ export const OnlineReader: React.FC = () => {
         {/* Left: Close, Thumbnails & Book Title */}
         <div className="flex items-center gap-3">
           <button
-            onClick={closeReader}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-stone-300/80 hover:bg-stone-200/50 text-stone-800 text-xs font-mono tracking-wider uppercase transition-all shadow-sm"
+            onClick={handleClose}
+            className="glass-pill flex items-center gap-1.5 px-3.5 py-1.5 text-neutral-800 text-xs font-sans font-medium tracking-wide transition-all shadow-glass cursor-pointer hover:scale-105"
             title="Return to 3D Library (Esc)"
           >
             <ArrowLeft size={14} />

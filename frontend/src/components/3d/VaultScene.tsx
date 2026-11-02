@@ -7,6 +7,7 @@ import { BrutalistArchitecture } from './BrutalistArchitecture';
 import { ArchivalStacks } from './ArchivalStacks';
 import { HolographicRunes } from './HolographicRunes';
 import { RelicPedestals } from './RelicPedestals';
+import { HeroStageBook3D } from './HeroStageBook3D';
 import { AtmosphericDust } from './AtmosphericDust';
 import { useVaultStore } from '../../store/vaultStore';
 
@@ -19,6 +20,7 @@ const CameraController: React.FC = () => {
     focusPedestal,
     resetView,
     isReaderOpen,
+    isHeroMode,
   } = useVaultStore();
   const controlsRef = useRef<any>(null);
   const { camera } = useThree();
@@ -58,7 +60,7 @@ const CameraController: React.FC = () => {
     if (!isReaderOpen) {
       let forward = 0;
       let strafe = 0;
-      const speed = 4.2 * delta;
+      const speed = 4.4 * delta;
 
       if (keysDown.current['w'] || keysDown.current['arrowup']) forward += speed;
       if (keysDown.current['s'] || keysDown.current['arrowdown']) forward -= speed;
@@ -87,7 +89,7 @@ const CameraController: React.FC = () => {
       ref={controlsRef}
       enableDamping
       dampingFactor={0.06}
-      minDistance={0.8}
+      minDistance={isHeroMode ? 1.8 : 0.8}
       maxDistance={14.0}
       minPolarAngle={Math.PI / 6}
       maxPolarAngle={Math.PI / 2 + 0.05}
@@ -103,8 +105,8 @@ export const VaultScene: React.FC = () => {
       <ThreeErrorBoundary>
         <Canvas
           shadows={false}
-          dpr={[1.5, 2]}
-          camera={{ position: [0, 2.2, 7.8], fov: 42 }}
+          dpr={[1, Math.min(typeof window !== 'undefined' ? window.devicePixelRatio : 1.5, 1.75)]}
+          camera={{ position: [0, 1.45, 3.8], fov: 42 }}
           gl={{
             powerPreference: 'high-performance',
             antialias: true,
@@ -118,7 +120,7 @@ export const VaultScene: React.FC = () => {
           <fog attach="fog" args={['#f5f2eb', 9.0, 24.0]} />
 
           <Suspense fallback={null}>
-            <PerspectiveCamera makeDefault position={[0, 2.2, 7.8]} fov={42} />
+            <PerspectiveCamera makeDefault position={[0, 1.45, 3.8]} fov={42} />
             <CameraController />
 
             {/* ================= SUNLIT ILLUMINATION SCHEME ================= */}
@@ -148,7 +150,7 @@ export const VaultScene: React.FC = () => {
             <pointLight position={[4.5, 2.5, 3.0]} color="#f2e2be" intensity={1.4} distance={14} />
 
             {/* ================= 3D ARCHITECTURAL LAYERS ================= */}
-            {/* 1. Honed Travertine & Carrara Marble Chamber */}
+            {/* 1. Honed Travertine & Carrara Marble Chamber with Click-to-Walk */}
             <BrutalistArchitecture />
 
             {/* 2. Instanced Archival Stacks (500+ Books, 1 Draw Call) */}
@@ -160,12 +162,14 @@ export const VaultScene: React.FC = () => {
             {/* 4. The 7 Personal Relic Volumes on Travertine Pedestals */}
             <RelicPedestals />
 
-            {/* 5. Golden Sunbeam Mote Particulates */}
-            <AtmosphericDust count={150} />
+            {/* 5. 3D Book Reveal Hero Turntable Stage */}
+            <HeroStageBook3D />
+
+            {/* 6. Golden Sunbeam Mote Particulates */}
+            <AtmosphericDust count={120} />
           </Suspense>
         </Canvas>
       </ThreeErrorBoundary>
     </div>
   );
 };
-

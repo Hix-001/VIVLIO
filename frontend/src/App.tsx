@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { VaultScene } from './components/3d/VaultScene';
 import { VaultHUD } from './components/hud/VaultHUD';
+import { HeroReveal } from './components/hero/HeroReveal';
 import { BookRelicModal } from './components/hud/BookRelicModal';
 import { PreloaderHUD } from './components/hud/PreloaderHUD';
 import { OnlineReader } from './components/reader/OnlineReader';
@@ -9,7 +10,7 @@ import { useVaultStore } from './store/vaultStore';
 export const App: React.FC = () => {
   const { isAudioMuted } = useVaultStore();
 
-  // Subtle Acoustic Harmonic Drone
+  // Subtle Acoustic Harmonic Drone (Zero-distortion gentle sine)
   useEffect(() => {
     if (isAudioMuted) return;
 
@@ -28,7 +29,7 @@ export const App: React.FC = () => {
         osc.frequency.setValueAtTime(65, audioCtx.currentTime);
 
         // Very gentle acoustic ambient volume
-        gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.018, audioCtx.currentTime);
 
         osc.connect(gain);
         gain.connect(audioCtx.destination);
@@ -47,20 +48,23 @@ export const App: React.FC = () => {
   }, [isAudioMuted]);
 
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-[#f5f2eb] text-stone-900 select-none font-sans">
+    <div className="relative w-screen h-screen overflow-hidden bg-[#f5f2eb] text-neutral-900 select-none font-sans">
       {/* 1. Full 3D Sunlit Archival Sanctuary */}
       <VaultScene />
 
-      {/* 2. Light Mode Glass HUD Interface */}
+      {/* 2. Apple-Style 3D Book Reveal Hero Section */}
+      <HeroReveal />
+
+      {/* 3. Light Mode Frosted Glass HUD Interface for Movable World */}
       <VaultHUD />
 
-      {/* 3. Luxury Relic Examination Modal */}
+      {/* 4. Luxury Relic Examination Modal */}
       <BookRelicModal />
 
-      {/* 4. Full-Featured Two-Page Physical Online Reader */}
+      {/* 5. Full-Featured Two-Page Physical Online Reader */}
       <OnlineReader />
 
-      {/* 5. Atmospheric Preloader Telemetry */}
+      {/* 6. Atmospheric Preloader Telemetry */}
       <PreloaderHUD />
     </div>
   );

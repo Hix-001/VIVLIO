@@ -1,5 +1,15 @@
 import React from 'react';
-import { Volume2, VolumeX, RotateCcw, BookOpen, Compass, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Volume2,
+  VolumeX,
+  RotateCcw,
+  BookOpen,
+  Compass,
+  ChevronLeft,
+  ChevronRight,
+  Sparkles,
+  Footprints,
+} from 'lucide-react';
 import { useVaultStore } from '../../store/vaultStore';
 
 export const VaultHUD: React.FC = () => {
@@ -14,11 +24,18 @@ export const VaultHUD: React.FC = () => {
     openReader,
     isAudioMuted,
     toggleAudio,
+    isHeroMode,
+    setHeroMode,
+    cameraPosition,
   } = useVaultStore();
+
+  if (isHeroMode) return null;
 
   const categories = ['All', 'Philosophy', 'Classic', 'Psychology', 'History'];
 
-  const activeBook = books.find((b) => b.id === activeBookId) || (focusedPedestalIndex !== null ? books[focusedPedestalIndex] : null);
+  const activeBook =
+    books.find((b) => b.id === activeBookId) ||
+    (focusedPedestalIndex !== null ? books[focusedPedestalIndex] : null);
 
   const prevPedestal = () => {
     const current = focusedPedestalIndex ?? 0;
@@ -32,32 +49,46 @@ export const VaultHUD: React.FC = () => {
     focusPedestal(nextIdx);
   };
 
+  // Radar position normalized within 20m circle
+  const radarX = Math.max(10, Math.min(70, 40 + (cameraPosition[0] / 12) * 28));
+  const radarZ = Math.max(10, Math.min(70, 40 + (cameraPosition[2] / 12) * 28));
+
   return (
-    <div className="pointer-events-none fixed inset-0 z-50 flex flex-col justify-between p-4 sm:p-7 select-none">
+    <div className="pointer-events-none fixed inset-0 z-40 flex flex-col justify-between p-4 sm:p-7 select-none animate-fade-in font-sans">
       {/* ================= TOP NAVBAR ================= */}
       <header className="flex items-center justify-between pointer-events-auto">
-        {/* Brand & Sanctuary Status */}
+        {/* Brand & Mode Switcher */}
         <div className="flex items-center gap-3">
-          <div className="w-8 h-9 border border-[#c59b27] rounded-sm relative flex items-center justify-center bg-white/90 backdrop-blur-md shadow-sm">
-            <span className="text-xs text-[#c59b27] font-mono font-bold">Ψ</span>
+          <div className="w-9 h-10 rounded-2xl glass-pill flex items-center justify-center text-[#c59b27] font-serif font-bold text-base shadow-glass">
+            Ψ
           </div>
           <div>
-            <h1 className="font-serif text-2xl tracking-widest uppercase text-stone-900 font-normal leading-none">
+            <h1 className="font-serif text-2xl tracking-tight text-neutral-900 font-light leading-none">
               Vivlio
             </h1>
-            <span className="font-mono text-[9px] tracking-[0.22em] text-[#9b781e] uppercase block mt-1">
-              Sunlit Sanctuary // 7 Volumes
+            <span className="font-sans text-[10px] tracking-[0.2em] text-[#9b781e] uppercase block mt-1 font-medium">
+              Sanctuary Exploration World
             </span>
           </div>
         </div>
 
         {/* Right Action Controls */}
         <div className="flex items-center gap-2">
-          {/* Reset Camera Focus */}
+          {/* Return to 3D Hero Reveal Showcase */}
+          <button
+            onClick={() => setHeroMode(true)}
+            className="glass-pill px-4 py-2 flex items-center gap-1.5 text-xs font-sans font-medium text-neutral-800 hover:text-neutral-950 transition-all shadow-glass cursor-pointer hover:scale-105"
+            title="Return to 3D Hero Reveal Stage"
+          >
+            <Sparkles size={13} className="text-[#c59b27]" />
+            <span>Hero Showcase</span>
+          </button>
+
+          {/* Center Overview */}
           <button
             onClick={resetView}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-stone-200/90 bg-white/85 backdrop-blur-md text-stone-700 hover:text-stone-950 hover:border-[#c59b27]/60 text-xs font-mono uppercase tracking-wider transition-all shadow-sm"
-            title="Reset Sanctuary Overview (Press C)"
+            className="glass-pill px-3.5 py-2 flex items-center gap-1.5 text-xs font-sans font-medium text-neutral-700 hover:text-neutral-950 transition-all shadow-glass cursor-pointer"
+            title="Reset to Central Overview (Press C)"
           >
             <RotateCcw size={12} />
             <span className="hidden sm:inline">Overview (C)</span>
@@ -66,8 +97,8 @@ export const VaultHUD: React.FC = () => {
           {/* Audio Sound Toggle */}
           <button
             onClick={toggleAudio}
-            className="p-2 rounded-full border border-stone-200/90 bg-white/85 backdrop-blur-md text-stone-700 hover:text-[#c59b27] hover:border-[#c59b27]/60 transition-all shadow-sm"
-            title={isAudioMuted ? 'Unmute Tactile Sound' : 'Mute Sound'}
+            className="glass-pill p-2 text-neutral-700 hover:text-[#c59b27] transition-all shadow-glass cursor-pointer"
+            title={isAudioMuted ? 'Unmute Sound' : 'Mute Sound'}
           >
             {isAudioMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}
           </button>
@@ -76,88 +107,135 @@ export const VaultHUD: React.FC = () => {
           {activeBook && (
             <button
               onClick={() => openReader(activeBook)}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#c59b27] hover:bg-[#d8ab32] text-stone-950 text-xs font-mono font-bold uppercase tracking-wider transition-all shadow-md hover:shadow-lg animate-pulse"
+              className="flex items-center gap-2 px-5 py-2 rounded-full bg-[#c59b27] hover:bg-[#d8ab32] text-neutral-950 text-xs font-sans font-semibold tracking-wider uppercase transition-all shadow-lg hover:shadow-xl hover:scale-105 cursor-pointer animate-pulse"
             >
-              <BookOpen size={13} strokeWidth={2.5} />
+              <BookOpen size={14} strokeWidth={2.4} />
               <span>Read {activeBook.title.split(' ')[0]}</span>
             </button>
           )}
         </div>
       </header>
 
-      {/* ================= BOTTOM CONTROLS & PEDESTAL CAROUSEL ================= */}
-      <footer className="flex flex-col items-center gap-3 pointer-events-auto">
-        {/* Interactive Pedestal Fast-Switcher Bar */}
-        <div className="flex items-center gap-2 px-3 py-2 rounded-2xl border border-stone-200/90 bg-white/90 backdrop-blur-xl shadow-xl max-w-full overflow-x-auto">
-          <button
-            onClick={prevPedestal}
-            className="p-1.5 rounded-full hover:bg-stone-100 text-stone-700 transition-colors"
-            title="Previous Book"
-          >
-            <ChevronLeft size={16} />
-          </button>
+      {/* ================= RADAR / MINIMAP & NAVIGATION ================= */}
+      <div className="flex justify-between items-end pointer-events-auto">
+        {/* Floating Frosted Glass Sanctuary Compass Mini-Radar */}
+        <div className="glass-card p-3 shadow-glass flex items-center gap-3 hidden sm:flex">
+          <div className="relative w-16 h-16 rounded-full border border-neutral-300/80 bg-stone-100/60 overflow-hidden flex items-center justify-center">
+            {/* Center Dais indicator */}
+            <div className="w-5 h-5 rounded-full border border-dashed border-[#c59b27]/60" />
+            
+            {/* 7 Pedestals on radar */}
+            {Array.from({ length: 7 }).map((_, i) => {
+              const ang = ((i - 3) / 7) * (Math.PI * 1.25) + Math.PI / 2;
+              const px = 32 + Math.cos(ang) * 20;
+              const py = 32 + Math.sin(ang) * 20;
+              const isFoc = focusedPedestalIndex === i;
+              return (
+                <div
+                  key={i}
+                  className={`absolute w-1.5 h-1.5 rounded-full -translate-x-1/2 -translate-y-1/2 transition-all ${
+                    isFoc ? 'bg-[#c59b27] scale-150' : 'bg-neutral-400'
+                  }`}
+                  style={{ left: `${px}px`, top: `${py}px` }}
+                />
+              );
+            })}
 
-          {books.map((book, idx) => {
-            const isCurrent = focusedPedestalIndex === idx || activeBookId === book.id;
-            return (
-              <button
-                key={book.id}
-                onClick={() => focusPedestal(idx)}
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono tracking-wider transition-all whitespace-nowrap ${
-                  isCurrent
-                    ? 'bg-[#c59b27] text-stone-950 font-bold shadow-sm scale-105'
-                    : 'text-stone-600 hover:text-stone-950 hover:bg-stone-100/90'
-                }`}
-                title={`Focus ${book.title} (Key ${idx + 1})`}
-              >
-                <span className="opacity-60 text-[10px] font-sans font-bold">[{idx + 1}]</span>
-                <span>{book.title.length > 16 ? book.title.slice(0, 15) + '…' : book.title}</span>
-              </button>
-            );
-          })}
+            {/* Player Puck */}
+            <div
+              className="absolute w-2 h-2 rounded-full bg-blue-600 shadow-xs border border-white -translate-x-1/2 -translate-y-1/2"
+              style={{ left: `${radarX}%`, top: `${radarZ}%` }}
+            />
+          </div>
 
-          <button
-            onClick={nextPedestal}
-            className="p-1.5 rounded-full hover:bg-stone-100 text-stone-700 transition-colors"
-            title="Next Book"
-          >
-            <ChevronRight size={16} />
-          </button>
+          <div className="font-sans text-[11px] text-neutral-600">
+            <span className="font-semibold text-neutral-900 block font-serif">Sanctuary Radar</span>
+            <span className="text-[10px] text-neutral-500 block">Click floor to walk</span>
+          </div>
         </div>
 
-        {/* Category Filter Pills & Navigation Hints */}
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          {/* Categories */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-stone-200/80 bg-white/80 backdrop-blur-md shadow-sm">
-            {categories.map((cat) => {
-              const isActive = selectedCategory === cat;
+        {/* ================= BOTTOM PEDESTAL FAST-SWITCHER ================= */}
+        <footer className="flex-1 flex flex-col items-center gap-3 max-w-2xl mx-auto">
+          {/* Horizontal Volume Bar */}
+          <div className="glass-card px-3 py-2 flex items-center gap-2 max-w-full overflow-x-auto shadow-glass">
+            <button
+              onClick={prevPedestal}
+              className="p-1.5 rounded-full hover:bg-neutral-200/50 text-neutral-700 transition-colors cursor-pointer"
+              title="Previous Book"
+            >
+              <ChevronLeft size={16} />
+            </button>
+
+            {books.map((book, idx) => {
+              const isCurrent =
+                focusedPedestalIndex === idx || activeBookId === book.id;
               return (
                 <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-2.5 py-0.5 rounded-full text-[11px] font-mono tracking-wider transition-all whitespace-nowrap ${
-                    isActive
-                      ? 'bg-stone-900 text-white font-medium shadow-xs'
-                      : 'text-stone-600 hover:text-stone-950 hover:bg-stone-100'
+                  key={book.id}
+                  onClick={() => focusPedestal(idx)}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-2xl text-xs font-sans font-medium tracking-wide transition-all whitespace-nowrap cursor-pointer ${
+                    isCurrent
+                      ? 'bg-neutral-900 text-white shadow-md scale-102 font-semibold'
+                      : 'text-neutral-700 hover:text-neutral-950 hover:bg-white/70'
                   }`}
+                  title={`Focus ${book.title} (Key ${idx + 1})`}
                 >
-                  {cat}
+                  <span className="opacity-50 text-[10px] font-mono">[{idx + 1}]</span>
+                  <span>
+                    {book.title.length > 15
+                      ? book.title.slice(0, 14) + '…'
+                      : book.title}
+                  </span>
                 </button>
               );
             })}
+
+            <button
+              onClick={nextPedestal}
+              className="p-1.5 rounded-full hover:bg-neutral-200/50 text-neutral-700 transition-colors cursor-pointer"
+              title="Next Book"
+            >
+              <ChevronRight size={16} />
+            </button>
           </div>
 
-          {/* Interactive Navigation Keyboard Badge */}
-          <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 backdrop-blur-md border border-stone-200/80 text-[10px] font-mono text-stone-600 shadow-sm">
-            <Compass size={12} className="text-[#c59b27]" />
-            <span><strong className="text-stone-900">WASD / Arrows</strong> to Walk</span>
-            <span className="text-stone-300">&bull;</span>
-            <span><strong className="text-stone-900">1–7</strong> Jump to Book</span>
-            <span className="text-stone-300">&bull;</span>
-            <span><strong className="text-stone-900">Double-Click</strong> to Read</span>
+          {/* Categories & Navigation Badge */}
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {/* Category Filter Pills */}
+            <div className="glass-pill px-3 py-1 flex items-center gap-1.5 shadow-glass">
+              {categories.map((cat) => {
+                const isActive = selectedCategory === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-3 py-0.5 rounded-full text-[11px] font-sans font-medium transition-all whitespace-nowrap cursor-pointer ${
+                      isActive
+                        ? 'bg-[#c59b27] text-neutral-950 font-semibold shadow-xs'
+                        : 'text-neutral-600 hover:text-neutral-950'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Movement Hints */}
+            <div className="glass-pill px-4 py-1 flex items-center gap-2 text-[11px] font-sans text-neutral-600 shadow-glass hidden md:flex">
+              <Footprints size={12} className="text-[#c59b27]" />
+              <span><strong className="text-neutral-900 font-semibold">WASD</strong> to Walk</span>
+              <span className="text-neutral-300">&bull;</span>
+              <span><strong className="text-neutral-900 font-semibold">Click Floor</strong> to Navigate</span>
+              <span className="text-neutral-300">&bull;</span>
+              <span><strong className="text-neutral-900 font-semibold">1–7</strong> Pedestals</span>
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+
+        {/* Placeholder balance for flex alignment */}
+        <div className="w-16 hidden sm:block" />
+      </div>
     </div>
   );
 };

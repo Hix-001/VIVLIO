@@ -6,20 +6,84 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs
 class PDFTextureManager {
   private docCache = new Map<string, any>();
   private canvasCache = new Map<string, HTMLCanvasElement>();
+  private canvasAccessOrder: string[] = [];
   private pendingPromises = new Map<string, Promise<HTMLCanvasElement>>();
+  
+  // Memory optimization: Strict LRU cap to keep memory usage under control
+  private readonly MAX_CACHED_CANVASES = 22;
 
   async getDocument(pdfUrl: string) {
     if (this.docCache.has(pdfUrl)) {
       return this.docCache.get(pdfUrl);
     }
     try {
-      const loadingTask = pdfjsLib.getDocument(pdfUrl);
+      const loadingTask = pdfjsLib.getDocument({
+        url: pdfUrl,
+        cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+        cMapPacked: true,
+      });
       const pdfDoc = await loadingTask.promise;
+      
+      // Keep at most 2 active PDF documents in memory; destroy others
+      if (this.docCache.size >= 2) {
+        const oldestUrl = this.docCache.keys().next().value;
+        if (oldestUrl && oldestUrl !== pdfUrl) {
+          const oldDoc = this.docCache.get(oldestUrl);
+          try { oldDoc?.destroy(); } catch {}
+          this.docCache.delete(oldestUrl);
+          this.cleanBookCanvases(oldestUrl);
+        }
+      }
+
       this.docCache.set(pdfUrl, pdfDoc);
       return pdfDoc;
     } catch (e) {
       console.warn(`Could not load PDF at ${pdfUrl}:`, e);
       return null;
+    }
+  }
+
+  // Purge canvases of a specific book when no longer needed
+  cleanBookCanvases(pdfUrl: string) {
+    for (const key of Array.from(this.canvasCache.keys())) {
+      if (key.startsWith(pdfUrl)) {
+        const canvas = this.canvasCache.get(key);
+        if (canvas) {
+          // Immediately release underlying GPU framebuffer
+          canvas.width = 0;
+          canvas.height = 0;
+        }
+        this.canvasCache.delete(key);
+        const idx = this.canvasAccessOrder.indexOf(key);
+        if (idx !== -1) this.canvasAccessOrder.splice(idx, 1);
+      }
+    }
+  }
+
+  // LRU Store: inserts a canvas and discards oldest to prevent memory leakage
+  private storeCanvas(key: string, canvas: HTMLCanvasElement) {
+    // Evict oldest if exceeding capacity
+    while (this.canvasCache.size >= this.MAX_CACHED_CANVASES && this.canvasAccessOrder.length > 0) {
+      const oldestKey = this.canvasAccessOrder.shift();
+      if (oldestKey && oldestKey !== key) {
+        const oldCanvas = this.canvasCache.get(oldestKey);
+        if (oldCanvas) {
+          oldCanvas.width = 0;
+          oldCanvas.height = 0;
+        }
+        this.canvasCache.delete(oldestKey);
+      }
+    }
+
+    this.canvasCache.set(key, canvas);
+    this.canvasAccessOrder.push(key);
+  }
+
+  private touchCanvas(key: string) {
+    const idx = this.canvasAccessOrder.indexOf(key);
+    if (idx !== -1) {
+      this.canvasAccessOrder.splice(idx, 1);
+      this.canvasAccessOrder.push(key);
     }
   }
 
@@ -38,8 +102,9 @@ class PDFTextureManager {
   async renderPageCanvas(pdfDoc: any, pdfUrl: string, pageNum: number, scale = 2.0): Promise<HTMLCanvasElement> {
     const key = `${pdfUrl}_p${pageNum}_s${scale}`;
     
-    // 1. Instant cache hit
+    // 1. Instant LRU cache hit
     if (this.canvasCache.has(key)) {
+      this.touchCanvas(key);
       return this.canvasCache.get(key)!;
     }
 
@@ -50,7 +115,7 @@ class PDFTextureManager {
 
     if (!pdfDoc || pageNum < 1 || pageNum > pdfDoc.numPages) {
       const blank = this.createBlankPaperCanvas();
-      this.canvasCache.set(key, blank);
+      this.storeCanvas(key, blank);
       return blank;
     }
 
@@ -73,12 +138,12 @@ class PDFTextureManager {
           viewport: viewport,
         }).promise;
 
-        this.canvasCache.set(key, canvas);
+        this.storeCanvas(key, canvas);
         return canvas;
       } catch (err) {
         console.warn(`Error rendering page ${pageNum}:`, err);
         const fallback = this.createBlankPaperCanvas();
-        this.canvasCache.set(key, fallback);
+        this.storeCanvas(key, fallback);
         return fallback;
       } finally {
         this.pendingPromises.delete(key);
@@ -100,14 +165,13 @@ class PDFTextureManager {
   }
 
   // Pre-render upcoming and preceding spreads quietly in the background
-  async prefetchSpreads(pdfUrl: string, centerSpreadIndex: number, ahead = 4, behind = 2) {
+  async prefetchSpreads(pdfUrl: string, centerSpreadIndex: number, ahead = 3, behind = 1) {
     const pdfDoc = await this.getDocument(pdfUrl);
     if (!pdfDoc) return;
 
     const totalPages = pdfDoc.numPages;
     const totalSpreads = Math.max(1, Math.ceil((totalPages + 1) / 2));
 
-    // Order of priority: next spread, 2nd next, previous spread, etc.
     const prioritySpreads: number[] = [];
     for (let i = 1; i <= ahead; i++) {
       const nextIdx = centerSpreadIndex + i;
@@ -118,7 +182,6 @@ class PDFTextureManager {
       if (prevIdx >= 0) prioritySpreads.push(prevIdx);
     }
 
-    // Background prefetching queue with slight stagger to keep UI silky smooth
     for (const spread of prioritySpreads) {
       if (spread === 0) {
         this.renderPageCanvas(pdfDoc, pdfUrl, 1);
@@ -128,8 +191,7 @@ class PDFTextureManager {
         if (left <= totalPages) this.renderPageCanvas(pdfDoc, pdfUrl, left);
         if (right <= totalPages) this.renderPageCanvas(pdfDoc, pdfUrl, right);
       }
-      // Micro-pause to yield thread to browser rendering
-      await new Promise((r) => setTimeout(r, 16));
+      await new Promise((r) => setTimeout(r, 20));
     }
   }
 
@@ -155,8 +217,8 @@ class PDFTextureManager {
       rightCanvas = right;
     }
 
-    // Immediately trigger background prefetch for seamless next/prev page turns
-    this.prefetchSpreads(pdfUrl, spreadIndex, 4, 2);
+    // Trigger prefetching with small radius
+    this.prefetchSpreads(pdfUrl, spreadIndex, 3, 1);
 
     return {
       leftCanvas,
@@ -164,6 +226,17 @@ class PDFTextureManager {
       totalPages,
       totalSpreads,
     };
+  }
+
+  // Clear everything when exiting or low memory
+  clearAll() {
+    for (const canvas of Array.from(this.canvasCache.values())) {
+      canvas.width = 0;
+      canvas.height = 0;
+    }
+    this.canvasCache.clear();
+    this.canvasAccessOrder = [];
+    this.pendingPromises.clear();
   }
 }
 

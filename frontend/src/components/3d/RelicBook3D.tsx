@@ -183,16 +183,16 @@ export const RelicBook3D: React.FC<RelicBook3DProps> = ({
           position={[0, height / 2 + 0.38, 0]}
           center
           distanceFactor={6.5}
-          className="pointer-events-auto select-none"
+          className="pointer-events-auto select-none font-sans"
         >
-          <div className="bg-white/95 backdrop-blur-xl border border-stone-200/90 shadow-2xl rounded-2xl p-3.5 min-w-[210px] text-center transform -translate-y-2 transition-all animate-fade-in">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-[#c59b27] font-bold block mb-1">
+          <div className="glass-card p-3.5 min-w-[220px] text-center transform -translate-y-2 transition-all animate-fade-in shadow-glass">
+            <span className="text-[10px] font-sans font-semibold uppercase tracking-widest text-[#c59b27] block mb-1">
               Vol. {index + 1} &middot; {book.category}
             </span>
-            <h3 className="font-serif text-sm font-semibold text-stone-900 leading-snug line-clamp-1">
+            <h3 className="font-serif text-base font-light text-neutral-900 leading-snug line-clamp-1 mb-0.5">
               {book.title}
             </h3>
-            <p className="font-serif italic text-xs text-stone-600 mb-2.5">
+            <p className="font-serif italic text-xs text-[#8d6a1b] mb-2.5">
               {book.author}
             </p>
             <div className="flex items-center justify-center gap-1.5">
@@ -201,7 +201,7 @@ export const RelicBook3D: React.FC<RelicBook3DProps> = ({
                   e.stopPropagation();
                   openReader(book);
                 }}
-                className="px-3 py-1 rounded-full bg-[#c59b27] hover:bg-[#d8ab32] text-stone-950 font-bold font-mono text-[11px] uppercase tracking-wider transition-all shadow-sm flex items-center gap-1 cursor-pointer"
+                className="px-3.5 py-1 rounded-full bg-[#c59b27] hover:bg-[#d8ab32] text-neutral-950 font-sans font-semibold text-[11px] uppercase tracking-wider transition-all shadow-sm flex items-center gap-1 cursor-pointer hover:scale-105"
               >
                 <span>Read Online</span>
               </button>
@@ -210,12 +210,12 @@ export const RelicBook3D: React.FC<RelicBook3DProps> = ({
                   e.stopPropagation();
                   setInspectedBook(book);
                 }}
-                className="px-2.5 py-1 rounded-full border border-stone-300 hover:bg-stone-100 text-stone-700 font-mono text-[11px] uppercase tracking-wider transition-all cursor-pointer"
+                className="glass-pill px-2.5 py-1 text-neutral-700 hover:text-neutral-950 font-sans font-medium text-[11px] transition-all cursor-pointer shadow-xs"
               >
                 Inspect
               </button>
             </div>
-            <span className="text-[9px] font-mono text-stone-400 block mt-1.5">
+            <span className="text-[9px] font-sans text-neutral-400 block mt-1.5">
               (Double-click book to read)
             </span>
           </div>

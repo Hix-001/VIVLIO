@@ -147,6 +147,9 @@ interface VaultState {
   cameraTarget: [number, number, number];
   cameraPosition: [number, number, number];
   focusedPedestalIndex: number | null;
+  isHeroMode: boolean;
+  featuredHeroBookId: string;
+  clickWaypoint: [number, number, number] | null;
   isAudioMuted: boolean;
   isLoading: boolean;
   
@@ -156,8 +159,11 @@ interface VaultState {
   openReader: (book: VaultBook) => void;
   closeReader: () => void;
   setReaderViewMode: (mode: 'spread' | 'single') => void;
+  setHeroMode: (hero: boolean) => void;
+  setFeaturedHeroBookId: (id: string) => void;
   setCameraTarget: (target: [number, number, number]) => void;
   setCameraPosition: (pos: [number, number, number]) => void;
+  walkToFloorPoint: (point: [number, number, number]) => void;
   focusPedestal: (index: number) => void;
   resetView: () => void;
   walkCamera: (forward: number, strafe: number) => void;
@@ -173,9 +179,12 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   readingBook: null,
   isReaderOpen: false,
   readerViewMode: 'spread',
-  cameraTarget: [0, 0, 0],
-  cameraPosition: [0, 2.2, 7.8],
+  cameraTarget: [0, 0.75, 0],
+  cameraPosition: [0, 1.45, 3.8], // Intimate Hero reveal viewpoint
   focusedPedestalIndex: null,
+  isHeroMode: true, // Start in 3D Book Reveal Hero Section
+  featuredHeroBookId: PERSONAL_VAULT_BOOKS[0].id,
+  clickWaypoint: null,
   isAudioMuted: false, // unmuted by default for tactile clicks & ambient sanctuary
   isLoading: true,
 
@@ -188,23 +197,75 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   },
   closeReader: () => set({ isReaderOpen: false, readingBook: null }),
   setReaderViewMode: (mode) => set({ readerViewMode: mode }),
+  
+  setHeroMode: (hero: boolean) => {
+    sounds.playTactileClick();
+    if (hero) {
+      set({
+        isHeroMode: true,
+        focusedPedestalIndex: null,
+        cameraTarget: [0, 0.75, 0],
+        cameraPosition: [0, 1.45, 3.8],
+      });
+    } else {
+      set({
+        isHeroMode: false,
+        cameraTarget: [0, 0.3, 0],
+        cameraPosition: [0, 1.8, 6.2],
+      });
+    }
+  },
+
+  setFeaturedHeroBookId: (id: string) => {
+    sounds.playSanctuaryChime();
+    set({ featuredHeroBookId: id, activeBookId: id });
+  },
+
   setCameraTarget: (target) => set({ cameraTarget: target }),
   setCameraPosition: (pos) => set({ cameraPosition: pos }),
   
+  walkToFloorPoint: (point: [number, number, number]) => {
+    const { cameraPosition } = get();
+    sounds.playTactileClick();
+    // Maintain eye height at 1.6m and look ahead towards the clicked point
+    const destX = Math.max(-10, Math.min(10, point[0]));
+    const destZ = Math.max(-10, Math.min(10, point[2]));
+    
+    // Look ahead in direction of movement
+    const dirX = destX - cameraPosition[0];
+    const dirZ = destZ - cameraPosition[2];
+    const len = Math.sqrt(dirX * dirX + dirZ * dirZ) || 1;
+    const lookX = destX + (dirX / len) * 2;
+    const lookZ = destZ + (dirZ / len) * 2;
+
+    set({
+      isHeroMode: false,
+      clickWaypoint: [destX, -1.2, destZ],
+      cameraPosition: [destX, 1.6, destZ],
+      cameraTarget: [lookX, 0.6, lookZ],
+    });
+
+    // Clear waypoint beacon ripple after animation
+    setTimeout(() => {
+      set({ clickWaypoint: null });
+    }, 2400);
+  },
+
   focusPedestal: (index: number) => {
     const { books } = get();
     if (index < 0 || index >= books.length) return;
     const book = books[index];
     const { x, z, rotY } = getPedestalTransform(index, books.length, PEDESTAL_RADIUS);
     
-    // Position camera ~1.6m in front of the book looking straight at the lectern
-    const camX = x + Math.sin(rotY) * 1.6;
-    const camZ = z + Math.cos(rotY) * 1.6;
+    // Position camera ~1.5m in front of the book looking straight at the lectern
+    const camX = x + Math.sin(rotY) * 1.5;
+    const camZ = z + Math.cos(rotY) * 1.5;
     const camY = 1.35; // Eye height at lectern
 
     sounds.playSanctuaryChime();
 
     set({
+      isHeroMode: false,
       focusedPedestalIndex: index,
       activeBookId: book.id,
       cameraTarget: [x, 0.45, z],
@@ -215,15 +276,21 @@ export const useVaultStore = create<VaultState>((set, get) => ({
   resetView: () => {
     sounds.playTactileClick();
     set({
+      isHeroMode: false,
       focusedPedestalIndex: null,
       activeBookId: null,
-      cameraTarget: [0, 0, 0],
-      cameraPosition: [0, 2.2, 7.8],
+      cameraTarget: [0, 0.3, 0],
+      cameraPosition: [0, 1.8, 6.2],
     });
   },
 
   walkCamera: (forward: number, strafe: number) => {
-    const { cameraPosition, cameraTarget } = get();
+    const { cameraPosition, cameraTarget, isHeroMode } = get();
+    // Automatically exit hero mode when walking starts
+    if (isHeroMode) {
+      set({ isHeroMode: false });
+    }
+
     // Compute forward vector in XZ plane
     const dx = cameraTarget[0] - cameraPosition[0];
     const dz = cameraTarget[2] - cameraPosition[2];
@@ -238,17 +305,17 @@ export const useVaultStore = create<VaultState>((set, get) => ({
     const moveX = fX * forward + sX * strafe;
     const moveZ = fZ * forward + sZ * strafe;
 
+    // Boundary circular collision with library perimeter
+    const nextX = Math.max(-9.5, Math.min(9.5, cameraPosition[0] + moveX));
+    const nextZ = Math.max(-9.5, Math.min(9.5, cameraPosition[2] + moveZ));
+
     set({
       focusedPedestalIndex: null,
-      cameraPosition: [
-        cameraPosition[0] + moveX,
-        cameraPosition[1],
-        cameraPosition[2] + moveZ,
-      ],
+      cameraPosition: [nextX, cameraPosition[1], nextZ],
       cameraTarget: [
-        cameraTarget[0] + moveX,
+        cameraTarget[0] + (nextX - cameraPosition[0]),
         cameraTarget[1],
-        cameraTarget[2] + moveZ,
+        cameraTarget[2] + (nextZ - cameraPosition[2]),
       ],
     });
   },
