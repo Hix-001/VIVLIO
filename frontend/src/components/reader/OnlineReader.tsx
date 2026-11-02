@@ -120,12 +120,17 @@ export const OnlineReader: React.FC = () => {
     }
   };
 
-  // Render spread when currentSpread changes
+  // Render spread when currentSpread changes with instant cache hit
   useEffect(() => {
     if (!readingBook || !isReaderOpen) return;
 
     let isMounted = true;
-    setIsLoading(true);
+    const isCached = pdfRenderer.hasSpreadCached(readingBook.pdfUrl, currentSpread);
+
+    // Only display spinner if not pre-rendered in background
+    if (!isCached) {
+      setIsLoading(true);
+    }
 
     pdfRenderer.getSpread(readingBook.pdfUrl, currentSpread).then((spreadData) => {
       if (!isMounted) return;
@@ -157,7 +162,7 @@ export const OnlineReader: React.FC = () => {
     };
   }, [readingBook, currentSpread, isReaderOpen]);
 
-  // Keyboard navigation & shortcuts
+  // Keyboard navigation: strictly A/D and ArrowUp/ArrowDown (no other keys)
   useEffect(() => {
     if (!isReaderOpen) return;
 
@@ -167,23 +172,23 @@ export const OnlineReader: React.FC = () => {
         return;
       }
 
-      if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') {
-        e.preventDefault();
-        goToSpread(currentSpread + 1);
-      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      const key = e.key.toLowerCase();
+
+      // Back: A or ArrowUp
+      if (key === 'a' || e.key === 'ArrowUp') {
         e.preventDefault();
         goToSpread(currentSpread - 1);
-      } else if (e.key === 'Home') {
+      }
+      // Forth: D or ArrowDown
+      else if (key === 'd' || e.key === 'ArrowDown') {
         e.preventDefault();
-        goToSpread(0);
-      } else if (e.key === 'End') {
-        e.preventDefault();
-        goToSpread(totalSpreads - 1);
-      } else if (e.key === 'f' || e.key === 'F') {
-        toggleFullscreen();
-      } else if (e.key === 'Escape') {
+        goToSpread(currentSpread + 1);
+      }
+      // Escape to return to sanctuary
+      else if (e.key === 'Escape') {
         closeReader();
       }
+      // Explicitly NO other keys move pages
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -539,6 +544,13 @@ export const OnlineReader: React.FC = () => {
           <span className="font-mono text-xs text-stone-700 whitespace-nowrap min-w-[50px] text-right">
             {currentSpread + 1} / {totalSpreads}
           </span>
+        </div>
+
+        {/* Keyboard navigation indicator pill */}
+        <div className="hidden lg:flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/[0.04] text-[11px] font-mono text-stone-600 border border-stone-300/60 shadow-inner">
+          <span><strong className="text-stone-900 font-bold">A / ↑</strong> Back</span>
+          <span className="text-stone-300">&bull;</span>
+          <span><strong className="text-stone-900 font-bold">D / ↓</strong> Forth</span>
         </div>
 
         <button
